@@ -6,8 +6,10 @@ interface SearchPageProps {
   searchParams: { q?: string };
 }
 
+// This makes the component a Server Component
 export default function SearchPage({ searchParams }: SearchPageProps) {
-  const query = searchParams.q || '';
+  // Access searchParams directly but safely
+  const query = searchParams?.q || '';
 
   return (
     <div className="flex flex-col space-y-8">
@@ -18,10 +20,16 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
         </p>
       </div>
 
+      {/* Use a Client Component for the form */}
       <SearchForm initialQuery={query} />
 
+      {/* Only render results if we have a query */}
       {query ? (
-        <Suspense fallback={<div>Loading results...</div>}>
+        <Suspense fallback={<div className="flex justify-center py-8">
+          <div className="animate-pulse">
+            <p>Searching knowledge base...</p>
+          </div>
+        </div>}>
           <SearchResults query={query} />
         </Suspense>
       ) : (

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchVectors } from '@/lib/supabase';
-import { generateResponse } from '@/lib/openai';
+import { searchVectors } from '@/lib/server/supabase';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -45,7 +44,8 @@ export async function GET(request: NextRequest) {
     
     // Extract source information with better document property handling
     const sources = chunks.map(chunk => {
-      const doc = chunk.documents || {};
+      // Ensure we have an object to work with, even if documents is undefined
+      const doc = (chunk.documents as any) || {};
       return {
         id: chunk.id,
         title: doc.title || 'Unknown Document',
@@ -54,12 +54,12 @@ export async function GET(request: NextRequest) {
       };
     });
     
-    // Generate response from LLM
-    const content = await generateResponse(query, context);
+    // Generate response using our own function to keep code organization consistent
+    const responseData = await generateCompletionResponse(query, context, request);
     
     // Return the generated response with source attribution
     return NextResponse.json({
-      content,
+      content: responseData.content,
       // Deduplicate sources by document ID to avoid repetition
       sources: Array.from(
         new Map(sources.map(s => [s.id, s])).values()
@@ -71,5 +71,40 @@ export async function GET(request: NextRequest) {
       { error: error.message || 'Failed to process search query' },
       { status: 500 }
     );
+  }
+}
+
+// Local function to generate completions
+async function generateCompletionResponse(
+  query: string, 
+  context: string[],
+  request: NextRequest
+) {
+  try {
+    // Call the completion API
+    const response = await fetch(new URL('/api/completion', request.url).toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        context,
+        model: 'gpt-4-turbo',
+        temperature: 0.7,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error from completion API: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error generating completion:', error);
+    // Return a simplified response in case of error
+    return {
+      content: `I found some information about "${query}", but I'm having trouble generating a comprehensive response. Please try again later.`,
+    };
   }
 } 
