@@ -53,8 +53,7 @@ export async function searchVectors(
     // The CLI uses specific threshold parameters
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
-      match_count: limit,
-      match_threshold: 0.5 // This matches the CLI minimum similarity threshold
+      match_count: limit
     });
     
     if (error) {
