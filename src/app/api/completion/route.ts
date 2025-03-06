@@ -24,33 +24,25 @@ export async function POST(request: NextRequest) {
     console.log(`Generating completion for query: "${query}"`);
     console.log(`Context length: ${Array.isArray(context) ? context.length : 'Not an array'}`);
 
-    const contextText = Array.isArray(context) 
-      ? context.join('\n\n---\n\n') 
-      : context;
+    // Format context exactly like the CLI version
+    const formattedContext = formatContextForLLM(context);
+
+    // Use a system prompt that matches the CLI version
+    const systemPrompt = `You are a knowledgeable assistant that provides accurate, detailed answers based on the provided context. 
+     If the answer cannot be determined from the context, acknowledge this limitation. 
+     Cite specific sources when possible. Be concise but thorough.`;
 
     const response = await openai.chat.completions.create({
       model: model || "gpt-4-turbo",
-      temperature: temperature || 0.7,
+      temperature: temperature || 0.1,
       messages: [
         {
           role: "system",
-          content: `You are a knowledgeable AI assistant that provides informative answers based on the context provided.
-          
-          CONTEXT INFORMATION:
-          ---------------------
-          ${contextText}
-          ---------------------
-          
-          INSTRUCTIONS:
-          1. Base your answer only on the context provided, not prior knowledge.
-          2. If the answer is not contained within the context, say "I don't have enough information to answer that."
-          3. Cite the sources where you found the information.
-          4. Use markdown formatting for better readability.
-          5. Be concise but comprehensive.`,
+          content: systemPrompt,
         },
         {
           role: "user",
-          content: query,
+          content: `Question: ${query}\n\nContext:\n${formattedContext}`
         },
       ],
     });
@@ -71,4 +63,30 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Format context items into a string for the prompt, matching CLI implementation
+function formatContextForLLM(context: any[]): string {
+  const formattedItems = context.map((item, i) => {
+    // Extract text and metadata
+    const text = item.content || item.text || "";
+    const metadata = item.metadata || {};
+    
+    // Format metadata (document title, page, etc.)
+    let sourceInfo = `Source ${i+1}`;
+    if (metadata.title) {
+      sourceInfo += `: ${metadata.title}`;
+    } else if (item.documents?.title) {
+      sourceInfo += `: ${item.documents.title}`;
+    }
+    
+    if (metadata.page) {
+      sourceInfo += `, Page ${metadata.page}`;
+    }
+    
+    // Add formatted item
+    return `${sourceInfo}\n${text}\n`;
+  });
+  
+  return formattedItems.join("\n");
 } 

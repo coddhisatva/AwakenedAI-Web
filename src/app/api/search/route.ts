@@ -39,31 +39,29 @@ export async function GET(request: NextRequest) {
     
     console.log(`Found ${chunks.length} relevant chunks`);
     
-    // Prepare context from retrieved chunks
-    const context = chunks.map(chunk => chunk.content);
+    // Format chunks to match the CLI expected format
+    const formattedChunks = chunks.map(chunk => ({
+      text: chunk.content,
+      score: chunk.similarity,
+      metadata: {
+        title: chunk.documents?.title || 'Unknown Document',
+        author: chunk.documents?.author || chunk.documents?.creator,
+        subject: chunk.documents?.subject,
+        source: chunk.documents?.filename || chunk.documents?.path,
+        document_id: chunk.document_id
+      }
+    }));
     
-    // Extract source information with better document property handling
-    const sources = chunks.map(chunk => {
-      // Ensure we have an object to work with, even if documents is undefined
-      const doc = (chunk.documents as any) || {};
-      return {
-        id: chunk.id,
-        title: doc.title || 'Unknown Document',
-        author: doc.author || doc.creator || undefined,
-        subject: doc.subject || undefined,
-      };
-    });
+    // Extract source information for attribution
+    const sources = extractSourcesFromChunks(chunks);
     
-    // Generate response using our own function to keep code organization consistent
-    const responseData = await generateCompletionResponse(query, context, request);
+    // Generate response using the completion API
+    const responseData = await generateCompletionResponse(query, formattedChunks, request);
     
     // Return the generated response with source attribution
     return NextResponse.json({
       content: responseData.content,
-      // Deduplicate sources by document ID to avoid repetition
-      sources: Array.from(
-        new Map(sources.map(s => [s.id, s])).values()
-      ),
+      sources: sources,
     });
   } catch (error: any) {
     console.error('Error processing search query:', error);
@@ -74,14 +72,34 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Extract sources from chunks, following CLI pattern
+function extractSourcesFromChunks(chunks: any[]) {
+  const sourceMap = new Map();
+  
+  chunks.forEach(chunk => {
+    if (!chunk.document_id) return;
+    
+    const doc = chunk.documents || {};
+    sourceMap.set(chunk.document_id, {
+      id: chunk.document_id,
+      title: doc.title || 'Unknown Document',
+      author: doc.author || doc.creator,
+      subject: doc.subject,
+      filename: doc.filename || doc.path
+    });
+  });
+  
+  return Array.from(sourceMap.values());
+}
+
 // Local function to generate completions
 async function generateCompletionResponse(
   query: string, 
-  context: string[],
+  context: any[],
   request: NextRequest
 ) {
   try {
-    // Call the completion API
+    // Call the completion API with the formatted context
     const response = await fetch(new URL('/api/completion', request.url).toString(), {
       method: 'POST',
       headers: {
@@ -91,7 +109,7 @@ async function generateCompletionResponse(
         query,
         context,
         model: 'gpt-4-turbo',
-        temperature: 0.7,
+        temperature: 0.1,  // Lower temperature to match CLI version
       }),
     });
     

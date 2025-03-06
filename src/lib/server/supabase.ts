@@ -36,7 +36,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
 /**
  * Search for vectors in the database based on similarity to the query
- * Server-side implementation
+ * Matches CLI implementation closely
  */
 export async function searchVectors(
   query: string,
@@ -50,8 +50,7 @@ export async function searchVectors(
     console.log('Embedding generated, searching database...');
     
     // Create a query to the chunks table with document join
-    // Using a raw query with RPC call to handle vector similarity search
-    // This matches how the processing repo likely set up the database
+    // Using a raw query with RPC call like the CLI does
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
       match_count: limit
@@ -77,13 +76,15 @@ export async function searchVectors(
       
       if (docError) {
         console.error('Error fetching documents:', docError);
-      } else {
-        // Add document info to each chunk
+      } else if (documents) {
+        // Add document info to each chunk, matching CLI structure
         return data.map((chunk: any) => {
-          const document = documents?.find(doc => doc.id === chunk.document_id);
+          const document = documents.find(doc => doc.id === chunk.document_id);
           return {
             ...chunk,
-            documents: document || null
+            documents: document || null,
+            // Ensure content field exists (CLI uses text, web uses content)
+            content: chunk.content || chunk.text || '',
           };
         });
       }
