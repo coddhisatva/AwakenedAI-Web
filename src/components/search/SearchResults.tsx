@@ -1,4 +1,7 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
 
 interface SearchResultsProps {
   query: string;
@@ -15,19 +18,77 @@ interface SearchResult {
   sources: ResultSource[];
 }
 
-async function fetchSearchResults(query: string): Promise<SearchResult> {
-  const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch search results');
-  }
-  
-  return response.json();
-}
+export function SearchResults({ query }: SearchResultsProps) {
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export async function SearchResults({ query }: SearchResultsProps) {
-  const result = await fetchSearchResults(query);
-  
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setResult(data);
+      } catch (err: any) {
+        console.error('Failed to fetch search results:', err);
+        setError(err.message || 'An error occurred while fetching results');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (query) {
+      fetchResults();
+    }
+  }, [query]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <p>Loading results...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-500">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Failed to load search results: {error}</p>
+            <p className="mt-2">Please try again later.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>No results found for your query.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>

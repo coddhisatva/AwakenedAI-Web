@@ -1,6 +1,6 @@
-import { Suspense } from 'react';
 import { SearchForm } from '@/components/search/SearchForm';
 import { SearchResults } from '@/components/search/SearchResults';
+import { Suspense } from 'react';
 
 interface SearchPageProps {
   searchParams: { q?: string };
