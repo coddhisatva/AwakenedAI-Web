@@ -1,16 +1,18 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface SearchResultsProps {
   query: string;
 }
 
 interface ResultSource {
+  id: string;
   title: string;
   author?: string;
-  id: string;
+  subject?: string;
+  filename?: string;
 }
 
 interface SearchResult {
@@ -32,10 +34,14 @@ export function SearchResults({ query }: SearchResultsProps) {
         const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(
+            errorData?.error || `Error: ${response.status} - ${response.statusText}`
+          );
         }
         
         const data = await response.json();
+        console.log('Search results:', data);
         setResult(data);
       } catch (err: any) {
         console.error('Failed to fetch search results:', err);
@@ -53,7 +59,9 @@ export function SearchResults({ query }: SearchResultsProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <p>Loading results...</p>
+        <div className="animate-pulse">
+          <p>Searching knowledge base...</p>
+        </div>
       </div>
     );
   }
@@ -61,7 +69,7 @@ export function SearchResults({ query }: SearchResultsProps) {
   if (error) {
     return (
       <div className="space-y-6">
-        <Card>
+        <Card className="border-red-200">
           <CardHeader>
             <CardTitle className="text-red-500">Error</CardTitle>
           </CardHeader>
@@ -74,7 +82,7 @@ export function SearchResults({ query }: SearchResultsProps) {
     );
   }
 
-  if (!result) {
+  if (!result || !result.content) {
     return (
       <div className="space-y-6">
         <Card>
@@ -82,7 +90,7 @@ export function SearchResults({ query }: SearchResultsProps) {
             <CardTitle>No Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>No results found for your query.</p>
+            <p>No results found for your query: "{query}"</p>
           </CardContent>
         </Card>
       </div>
@@ -94,19 +102,25 @@ export function SearchResults({ query }: SearchResultsProps) {
       <Card>
         <CardHeader>
           <CardTitle>Results for: {query}</CardTitle>
+          {result.sources.length > 0 && (
+            <CardDescription>
+              Found information in {result.sources.length} source{result.sources.length !== 1 ? 's' : ''}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <div className="whitespace-pre-line">{result.content}</div>
             
             {result.sources.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold">Sources</h3>
-                <ul className="mt-2 space-y-1">
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-semibold mb-2">Sources</h3>
+                <ul className="space-y-2">
                   {result.sources.map((source) => (
-                    <li key={source.id}>
-                      <span className="font-medium">{source.title}</span>
-                      {source.author && <span> by {source.author}</span>}
+                    <li key={source.id} className="p-2 rounded bg-muted/50">
+                      <div className="font-medium">{source.title || 'Unknown Document'}</div>
+                      {source.author && <div className="text-sm">by {source.author}</div>}
+                      {source.subject && <div className="text-sm text-muted-foreground">Subject: {source.subject}</div>}
                     </li>
                   ))}
                 </ul>
