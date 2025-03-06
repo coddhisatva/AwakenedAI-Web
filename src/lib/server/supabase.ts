@@ -83,7 +83,7 @@ export async function searchVectors(
           return {
             ...chunk,
             documents: document || null,
-            // Ensure content field exists (CLI uses text, web uses content)
+            // Ensure content field exists and is properly extracted
             content: chunk.content || chunk.text || '',
           };
         });

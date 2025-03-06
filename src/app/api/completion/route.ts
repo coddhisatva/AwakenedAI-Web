@@ -27,27 +27,42 @@ export async function POST(request: NextRequest) {
     // Format context exactly like the CLI version
     const formattedContext = formatContextForLLM(context);
 
-    // Use a system prompt that matches the CLI version
-    const systemPrompt = `You are a knowledgeable assistant that provides accurate, detailed answers based on the provided context. 
-     If the answer cannot be determined from the context, acknowledge this limitation. 
-     Cite specific sources when possible. Be concise but thorough.`;
+    // Update system prompt to include citation guidance while allowing broader knowledge
+    const systemPrompt = `You are Awakened AI, a knowledgeable assistant that prioritizes information from the provided context when available.
+When using information from the provided context, cite your sources by referencing the Context Item numbers.
+You may also draw on your general knowledge to supplement the provided context when necessary.
+Aim to be comprehensive, accurate, and helpful in your responses.`;
 
+    // Update how we structure the messages array
+    const messages = [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
+      {
+        role: "user",
+        content: `Question: ${query}
+
+Context:
+${formattedContext}
+
+Please answer the question. When using information from the context, cite the specific Context Item numbers.`
+      },
+    ];
+
+    // Then use the messages in the OpenAI call
     const response = await openai.chat.completions.create({
       model: model || "gpt-4-turbo",
       temperature: temperature || 0.1,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `Question: ${query}\n\nContext:\n${formattedContext}`
-        },
-      ],
+      messages: messages,
     });
 
     console.log('Completion generated successfully');
+
+    // Add this logging in the completion route
+    console.log('Received context length:', context.length);
+    console.log('Sample context item:', JSON.stringify(context[0], null, 2));
+    console.log('Formatted context preview:', formattedContext.substring(0, 200) + '...');
 
     return NextResponse.json({
       content: response.choices[0].message.content,
@@ -67,26 +82,12 @@ export async function POST(request: NextRequest) {
 
 // Format context items into a string for the prompt, matching CLI implementation
 function formatContextForLLM(context: any[]): string {
-  const formattedItems = context.map((item, i) => {
-    // Extract text and metadata
-    const text = item.content || item.text || "";
+  return context.map((item, i) => {
+    // Extract content - be flexible with field naming to handle both text and content fields
+    const content = item.text || item.content || "";
     const metadata = item.metadata || {};
     
-    // Format metadata (document title, page, etc.)
-    let sourceInfo = `Source ${i+1}`;
-    if (metadata.title) {
-      sourceInfo += `: ${metadata.title}`;
-    } else if (item.documents?.title) {
-      sourceInfo += `: ${item.documents.title}`;
-    }
-    
-    if (metadata.page) {
-      sourceInfo += `, Page ${metadata.page}`;
-    }
-    
-    // Add formatted item
-    return `${sourceInfo}\n${text}\n`;
-  });
-  
-  return formattedItems.join("\n");
+    // Format exactly as CLI does with numbered context items
+    return `Context Item ${i+1}:\n${content}\n\nSource: ${metadata.title || "Unknown Document"}\n`;
+  }).join("\n");
 } 

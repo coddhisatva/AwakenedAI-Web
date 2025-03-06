@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
     // Extract source information for attribution
     const sources = extractSourcesFromChunks(chunks);
     
+    // Add this after retrieving chunks
+    console.log('Sample chunk data:', JSON.stringify(chunks[0], null, 2));
+    
+    // And add this before calling the completion API
+    console.log('Formatted chunks sample:', JSON.stringify(formattedChunks[0], null, 2));
+    
     // Generate response using the completion API
     const responseData = await generateCompletionResponse(query, formattedChunks, request);
     
