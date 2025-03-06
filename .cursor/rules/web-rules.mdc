@@ -1,0 +1,90 @@
+---
+description: web-rules
+globs: 
+alwaysApply: true
+---
+# Updated Project Specifications: Awakened AI - A RAG-based Knowledge System (Web Application)
+
+SCOPE:
+- Frontend interface for querying 10,000-15,000 processed ebooks
+- Implementation: Retrieval-Augmented Generation (RAG) approach
+- Goal: Create an intuitive web interface for knowledge synthesis capabilities across the entire book collection
+
+PROJECT ARCHITECTURE:
+1. Web Application Framework
+   - Modern React with TypeScript
+   - Next.js App Router architecture
+   - API routes for backend functionality
+   - Available Tools:
+     * Next.js 14+
+     * React 18+
+     * Tailwind CSS
+     * Shadcn UI components
+     * TypeScript 5+
+
+2. Vector Database Integration
+   - Supabase with pgvector for retrieval
+   - OpenAI API for query generation
+   - Retrieval Features:
+     * Multi-step retrieval
+     * Context windowing
+     * Metadata filtering
+     * Source attribution
+
+3. Web Application Features
+   - User authentication via Supabase Auth
+   - Advanced query interface
+   - Result visualization
+   - Document management
+   - Query history & favorites
+
+4. RAG System Implementation
+   - API routes for query processing
+   - LLM integration for response synthesis
+   - Source formatting and attribution
+   - Caching for performance optimization
+
+TECHNICAL REQUIREMENTS:
+1. Development Infrastructure:
+   - Node.js 18+
+   - TypeScript 5+
+   - Supabase client libraries
+   - OpenAI API client
+
+2. External Services:
+   - OpenAI API access
+   - Supabase account
+   - Vercel account
+
+SYSTEM CAPABILITIES:
+1. User Interface:
+   - Modern, responsive design
+   - Accessibility compliance (WCAG 2.1)
+   - Dark/light mode support
+   - Mobile-first approach
+
+2. Query Experience:
+   - Fast response times
+   - Clear source attributions
+   - Follow-up questions
+   - Query refinement options
+
+3. Administrative Features:
+   - User management
+   - Usage analytics
+   - Content management
+   - System monitoring
+
+DEVELOPMENT PRACTICES:
+- Component-based architecture
+- TypeScript for all code
+- Unit tests for components and utilities
+- E2E tests for critical user flows
+- Consistent error handling
+- Responsive design for all screen sizes
+- Server components where appropriate
+- Client components for interactive elements
+- API route versioning
+- Proper loading/error states for all components
+
+Make sure you don't go rogue and start doing a bunch of stuff without checking with me.
