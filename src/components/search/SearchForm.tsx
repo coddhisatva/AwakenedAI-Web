@@ -43,7 +43,7 @@ export function SearchForm({ initialQuery }: SearchFormProps) {
         <CardTitle>Search</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4" role="form">
           <div className="flex gap-2">
             <Input
               value={query}
