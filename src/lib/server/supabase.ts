@@ -49,11 +49,12 @@ export async function searchVectors(
     
     console.log('Embedding generated, searching database...');
     
-    // Create a query to the chunks table with document join
-    // Using a raw query with RPC call like the CLI does
+    // Use the match_chunks RPC function with specific parameters to match CLI
+    // The CLI uses specific threshold parameters
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
-      match_count: limit
+      match_count: limit,
+      match_threshold: 0.5 // This matches the CLI minimum similarity threshold
     });
     
     if (error) {
@@ -63,34 +64,83 @@ export async function searchVectors(
     
     console.log(`Search returned ${data?.length || 0} results`);
     
-    // If we have results but need document info, fetch the related documents
+    // Log raw chunk data to verify content retrieval
     if (data && data.length > 0) {
-      // Extract document IDs from the results
+      console.log('First raw chunk data:', {
+        id: data[0].id,
+        document_id: data[0].document_id,
+        content_preview: data[0].content ? data[0].content.substring(0, 100) + '...' : 'No content found!',
+        similarity: data[0].similarity
+      });
+    }
+    
+    // If we have results but need document info, fetch the related documents
+    // This follows the CLI pattern of joining document metadata
+    if (data && data.length > 0) {
+      // Extract unique document IDs from the results
       const documentIds = [...new Set(data.map((chunk: any) => chunk.document_id))];
       
-      // Fetch the related documents
+      console.log(`Fetching metadata for ${documentIds.length} documents`);
+      
+      // Fetch the related documents with all relevant fields
+      // This matches the fields the CLI retrieves
       const { data: documents, error: docError } = await supabase
         .from('documents')
-        .select('id, title, author, creator, subject, filename, path')
+        .select('id, title, author, creator, subject, filename, path, metadata')
         .in('id', documentIds);
       
       if (docError) {
         console.error('Error fetching documents:', docError);
       } else if (documents) {
-        // Add document info to each chunk, matching CLI structure
+        console.log(`Retrieved ${documents.length} document records`);
+        
+        // Create a map for faster document lookups (CLI uses a similar approach)
+        const documentMap = documents.reduce((map: Record<string, any>, doc: any) => {
+          map[doc.id] = doc;
+          return map;
+        }, {});
+        
+        // Process chunks with document metadata like the CLI does
         return data.map((chunk: any) => {
-          const document = documents.find(doc => doc.id === chunk.document_id);
+          const document = documentMap[chunk.document_id] || null;
+          
+          // Return a structure that matches the CLI's format
           return {
-            ...chunk,
-            documents: document || null,
-            // Ensure content field exists and is properly extracted
-            content: chunk.content || chunk.text || '',
+            // Basic chunk data
+            id: chunk.id,
+            document_id: chunk.document_id,
+            text: chunk.content || '', // Standardize on text field but preserve content
+            content: chunk.content || '', // Keep original content field
+            similarity: chunk.similarity,
+            
+            // Include full document record
+            documents: document,
+            
+            // Extract key metadata fields for easier access (matches CLI pattern)
+            metadata: {
+              title: document?.title || 'Unknown Document',
+              author: document?.author || document?.creator || '',
+              subject: document?.subject || '',
+              source: document?.filename || document?.path || '',
+              document_id: chunk.document_id
+            }
           };
         });
       }
     }
     
-    return data || [];
+    // If no document join was performed, still format the base results
+    return data.map((chunk: any) => ({
+      id: chunk.id,
+      document_id: chunk.document_id,
+      text: chunk.content || '', // Standardize on text for consistency
+      content: chunk.content || '',
+      similarity: chunk.similarity,
+      metadata: {
+        title: 'Unknown Document',
+        document_id: chunk.document_id
+      }
+    })) || [];
   } catch (error) {
     console.error('Error in searchVectors:', error);
     throw error;

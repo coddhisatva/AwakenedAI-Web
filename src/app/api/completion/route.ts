@@ -83,11 +83,14 @@ Please answer the question. When using information from the context, cite the sp
 // Format context items into a string for the prompt, matching CLI implementation
 function formatContextForLLM(context: any[]): string {
   return context.map((item, i) => {
-    // Extract content - be flexible with field naming to handle both text and content fields
+    // Always prioritize the 'text' field to match CLI naming convention
     const content = item.text || item.content || "";
     const metadata = item.metadata || {};
     
-    // Format exactly as CLI does with numbered context items
+    // Format as in the CLI
     return `Context Item ${i+1}:\n${content}\n\nSource: ${metadata.title || "Unknown Document"}\n`;
   }).join("\n");
-} 
+}
+
+// Add logging to verify the context structure
+console.log('Context example item:', JSON.stringify(context[0], null, 2)); 

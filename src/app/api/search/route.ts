@@ -39,11 +39,14 @@ export async function GET(request: NextRequest) {
     
     console.log(`Found ${chunks.length} relevant chunks`);
     
-    // Format chunks to match the CLI expected format
+    // Format chunks to consistently use 'text' field and preserve metadata
     const formattedChunks = chunks.map(chunk => ({
-      text: chunk.content,
+      // Always use 'text' for content to match CLI convention
+      text: chunk.text || chunk.content || '',
+      // Include score for potential ranking
       score: chunk.similarity,
-      metadata: {
+      // Preserve all metadata
+      metadata: chunk.metadata || {
         title: chunk.documents?.title || 'Unknown Document',
         author: chunk.documents?.author || chunk.documents?.creator,
         subject: chunk.documents?.subject,
@@ -58,8 +61,8 @@ export async function GET(request: NextRequest) {
     // Add this after retrieving chunks
     console.log('Sample chunk data:', JSON.stringify(chunks[0], null, 2));
     
-    // And add this before calling the completion API
-    console.log('Formatted chunks sample:', JSON.stringify(formattedChunks[0], null, 2));
+    // Add logging to verify data structure
+    console.log('Formatted chunk example:', JSON.stringify(formattedChunks[0], null, 2));
     
     // Generate response using the completion API
     const responseData = await generateCompletionResponse(query, formattedChunks, request);
@@ -68,6 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       content: responseData.content,
       sources: sources,
+      query: query
     });
   } catch (error: any) {
     console.error('Error processing search query:', error);
@@ -78,24 +82,45 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Extract sources from chunks, following CLI pattern
+// Enhanced source extraction to match CLI implementation
 function extractSourcesFromChunks(chunks: any[]) {
+  // Create a map to deduplicate sources - CLI uses similar approach
   const sourceMap = new Map();
   
   chunks.forEach(chunk => {
     if (!chunk.document_id) return;
     
+    // Get document info from either the documents property or metadata
     const doc = chunk.documents || {};
-    sourceMap.set(chunk.document_id, {
-      id: chunk.document_id,
-      title: doc.title || 'Unknown Document',
-      author: doc.author || doc.creator,
-      subject: doc.subject,
-      filename: doc.filename || doc.path
+    const metadata = chunk.metadata || {};
+    
+    // Create a unique identifier for the source
+    const docId = chunk.document_id;
+    
+    // Skip if we've already processed this document
+    if (sourceMap.has(docId)) return;
+    
+    // Format source information to match CLI output format
+    sourceMap.set(docId, {
+      id: docId,
+      title: doc.title || metadata.title || 'Unknown Document',
+      author: doc.author || doc.creator || metadata.author || '',
+      subject: doc.subject || metadata.subject || '',
+      filename: doc.filename || doc.path || metadata.source || '',
+      // Add page info if available
+      page: metadata.page || doc.page || '',
+      // Include full path for reference
+      path: doc.path || ''
     });
   });
   
-  return Array.from(sourceMap.values());
+  // Convert to array and sort by id to ensure consistent order
+  const sources = Array.from(sourceMap.values());
+  
+  // Log sources to verify correct extraction
+  console.log('Extracted sources:', JSON.stringify(sources, null, 2));
+  
+  return sources;
 }
 
 // Local function to generate completions
