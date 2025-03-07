@@ -22,7 +22,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
     const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
+      model: "text-embedding-ada-002",
       input: text,
       encoding_format: "float",
     });
