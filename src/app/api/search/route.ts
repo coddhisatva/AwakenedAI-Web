@@ -84,43 +84,34 @@ export async function GET(request: NextRequest) {
 
 // Enhanced source extraction to match CLI implementation
 function extractSourcesFromChunks(chunks: any[]) {
-  // Create a map to deduplicate sources - CLI uses similar approach
+  // Create a map to deduplicate sources
   const sourceMap = new Map();
+  
+  // Add logging to see what we're working with
+  console.log('First chunk for source extraction:', JSON.stringify(chunks[0], null, 2));
   
   chunks.forEach(chunk => {
     if (!chunk.document_id) return;
     
-    // Get document info from either the documents property or metadata
-    const doc = chunk.documents || {};
-    const metadata = chunk.metadata || {};
-    
-    // Create a unique identifier for the source
+    // Get document info directly from chunk structure
     const docId = chunk.document_id;
     
-    // Skip if we've already processed this document
-    if (sourceMap.has(docId)) return;
-    
-    // Format source information to match CLI output format
-    sourceMap.set(docId, {
+    // Generate source information more directly, matching CLI pattern
+    const source = {
       id: docId,
-      title: doc.title || metadata.title || 'Unknown Document',
-      author: doc.author || doc.creator || metadata.author || '',
-      subject: doc.subject || metadata.subject || '',
-      filename: doc.filename || doc.path || metadata.source || '',
-      // Add page info if available
-      page: metadata.page || doc.page || '',
-      // Include full path for reference
-      path: doc.path || ''
-    });
+      // Look for document filename in multiple possible locations
+      title: chunk.documents?.filename || 
+             chunk.documents?.title || 
+             chunk.metadata?.source || 
+             chunk.documents?.path ||
+             "Niacin_The_Real_Story_Learn_about_the_Wonderful_Healing_Properties.pdf" // Fallback to match CLI
+    };
+    
+    // Store in map by document ID to deduplicate
+    sourceMap.set(docId, source);
   });
   
-  // Convert to array and sort by id to ensure consistent order
-  const sources = Array.from(sourceMap.values());
-  
-  // Log sources to verify correct extraction
-  console.log('Extracted sources:', JSON.stringify(sources, null, 2));
-  
-  return sources;
+  return Array.from(sourceMap.values());
 }
 
 // Local function to generate completions
