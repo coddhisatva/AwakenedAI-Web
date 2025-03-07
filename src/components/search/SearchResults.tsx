@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Search, AlertCircle, BookOpen, BookText, User, FileText, Tag, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SearchResultsProps {
   query: string;
@@ -58,9 +60,10 @@ export function SearchResults({ query }: SearchResultsProps) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-pulse">
-          <p>Searching knowledge base...</p>
+      <div className="flex justify-center py-12">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin"></div>
+          <p className="text-muted-foreground">Searching knowledge base...</p>
         </div>
       </div>
     );
@@ -69,13 +72,16 @@ export function SearchResults({ query }: SearchResultsProps) {
   if (error) {
     return (
       <div className="space-y-6">
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-500">Error</CardTitle>
+        <Card className="border-destructive/30 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <CardTitle className="text-destructive">Error</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <p>Failed to load search results: {error}</p>
-            <p className="mt-2">Please try again later.</p>
+            <p className="mt-2 text-muted-foreground">Please try again later or refine your search query.</p>
           </CardContent>
         </Card>
       </div>
@@ -85,12 +91,16 @@ export function SearchResults({ query }: SearchResultsProps) {
   if (!result || !result.content) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>No Results</CardTitle>
+        <Card className="shadow-sm border-warning/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              <CardTitle>No Results Found</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
-            <p>No results found for your query: "{query}"</p>
+            <p>No results found for your query: "<span className="font-medium">{query}</span>"</p>
+            <p className="mt-2 text-muted-foreground">Try using different keywords or check your spelling.</p>
           </CardContent>
         </Card>
       </div>
@@ -99,35 +109,69 @@ export function SearchResults({ query }: SearchResultsProps) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Results for: {query}</CardTitle>
-          {result.sources.length > 0 && (
-            <CardDescription>
-              Found information in {result.sources.length} source{result.sources.length !== 1 ? 's' : ''}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
-            <div className="whitespace-pre-line">{result.content}</div>
-            
-            {result.sources.length > 0 && (
-              <div className="mt-6 border-t pt-4">
-                <h3 className="text-lg font-semibold mb-2">Sources</h3>
-                <ul className="space-y-2">
-                  {result.sources.map((source) => (
-                    <li key={source.id} className="p-2 rounded bg-muted/50">
-                      <div className="font-medium">{source.title || 'Unknown Document'}</div>
-                      {source.author && <div className="text-sm">by {source.author}</div>}
-                      {source.subject && <div className="text-sm text-muted-foreground">Subject: {source.subject}</div>}
-                    </li>
-                  ))}
-                </ul>
+      <Card className="shadow-sm border-border overflow-hidden">
+        <CardHeader className="bg-secondary/30 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Search className="h-5 w-5 text-primary" />
+                <CardTitle>Results for: "<span className="text-primary font-semibold">{query}</span>"</CardTitle>
               </div>
-            )}
+              {result.sources.length > 0 && (
+                <CardDescription>
+                  Found information in {result.sources.length} source{result.sources.length !== 1 ? 's' : ''}
+                </CardDescription>
+              )}
+            </div>
+            <Button size="sm" variant="outline" className="gap-1.5">
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Save</span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:text-foreground prose-a:text-primary">
+            <div className="whitespace-pre-line leading-7">{result.content}</div>
           </div>
         </CardContent>
+        
+        {result.sources.length > 0 && (
+          <CardFooter className="flex flex-col border-t px-6 py-5 bg-secondary/10">
+            <div className="w-full">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span>Sources</span>
+              </h3>
+              <div className="grid gap-3">
+                {result.sources.map((source) => (
+                  <div 
+                    key={source.id} 
+                    className="p-3 rounded bg-card border border-border/50 hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex items-start gap-2">
+                      <BookText className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-medium">{source.title || 'Unknown Document'}</h4>
+                        {source.author && (
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                            <User className="h-3.5 w-3.5" />
+                            <span>{source.author}</span>
+                          </div>
+                        )}
+                        {source.subject && (
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                            <Tag className="h-3.5 w-3.5" />
+                            <span>{source.subject}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );

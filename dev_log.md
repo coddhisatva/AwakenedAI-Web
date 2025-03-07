@@ -16,3 +16,6 @@ Today's activities:
 
 ### Biggest Challenge:
 The bot was not able to find any context, and we spent a lot of time trying to replicate the functionality of the CLI version. After the ai did it very differently on first attempt, we moved the processing repo into the web repo, so that a fresh ai session could reference it for help
+
+## Day 6 (March 8)
+-Updated UI to version 1 from default version 0

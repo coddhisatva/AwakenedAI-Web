@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
 
     // Format context exactly like the CLI version
     const formattedContext = formatContextForLLM(context);
-    console.log('Formatted context preview:', formattedContext.substring(0, 200) + '...');
 
     // Update system prompt to include citation guidance while allowing broader knowledge
     const systemPrompt = `You are Awakened AI, a knowledgeable assistant that prioritizes information from the provided context when available.
@@ -71,12 +70,7 @@ Please answer the question. When using information from the context, cite the sp
       usage: response.usage,
     });
   } catch (error: any) {
-    console.error('Detailed completion error:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      cause: error.cause
-    });
+    console.error('Error generating completion:', error);
     return NextResponse.json(
       { 
         error: error.message || 'Failed to generate completion',
@@ -97,4 +91,7 @@ function formatContextForLLM(context: any[]): string {
     // Format as in the CLI
     return `Context Item ${i+1}:\n${content}\n\nSource: ${metadata.title || "Unknown Document"}\n`;
   }).join("\n");
-} 
+}
+
+// Add logging to verify the context structure
+console.log('Context example item:', JSON.stringify(context[0], null, 2)); 

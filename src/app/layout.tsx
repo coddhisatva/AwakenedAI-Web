@@ -18,7 +18,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Awakened AI - Knowledge System",
-  description: "A RAG-based knowledge system providing insights from thousands of ebooks",
+  description: "A RAG-based knowledge system providing insights from thousands of ebooks spanning mysticism, spirituality, and more.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -27,17 +30,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-foreground`}
       >
         <AuthProvider>
-          <Header />
-          <main className="flex-1 container py-6 md:py-10">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
+          <Toaster position="bottom-right" />
         </AuthProvider>
       </body>
     </html>
