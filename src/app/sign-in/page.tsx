@@ -44,8 +44,9 @@ export default function SignInPage() {
       
       toast.success('Signed in successfully');
       router.push('/');
-    } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred');
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +127,7 @@ export default function SignInPage() {
           </CardContent>
           <CardFooter className="flex justify-center border-t py-4 bg-secondary/20">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/sign-up" className="text-primary font-medium hover:underline">
                 Sign up
               </Link>

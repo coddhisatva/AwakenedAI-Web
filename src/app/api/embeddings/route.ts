@@ -6,13 +6,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+interface EmbeddingRequest {
+  text: string;
+}
+
 /**
  * API route for generating embeddings
  * Matches the structure from the processing repo
  */
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text } = await request.json() as EmbeddingRequest;
     
     if (!text) {
       return NextResponse.json(
@@ -36,12 +40,17 @@ export async function POST(request: NextRequest) {
       embedding: response.data[0].embedding,
       usage: response.usage,
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error generating embedding:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate embedding';
+    const errorDetails = error instanceof Error && 'response' in error 
+      ? (error as any).response?.data || {} 
+      : {};
+    
     return NextResponse.json(
       { 
-        error: error.message || 'Failed to generate embedding',
-        details: error.response?.data || {}
+        error: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     );

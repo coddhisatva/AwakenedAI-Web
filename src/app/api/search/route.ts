@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchVectors } from '@/lib/server/supabase';
 
+// Define proper interfaces for better type safety
+interface DocumentMetadata {
+  title?: string;
+  author?: string;
+  creator?: string;
+  subject?: string;
+  filename?: string;
+  path?: string;
+  source?: string;
+  [key: string]: unknown;
+}
+
+interface SearchChunk {
+  text?: string;
+  content?: string;
+  similarity?: number;
+  document_id?: string;
+  metadata?: DocumentMetadata;
+  documents?: {
+    title?: string;
+    author?: string;
+    creator?: string;
+    subject?: string;
+    filename?: string;
+    path?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface FormattedChunk {
+  text: string;
+  score?: number;
+  metadata: DocumentMetadata;
+}
+
+interface Source {
+  id: string;
+  title: string;
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
@@ -14,7 +54,7 @@ export async function GET(request: NextRequest) {
   
   try {
     // Extract any filters from search parameters
-    const filters: Record<string, any> = {};
+    const filters: Record<string, string> = {};
     
     // Add metadata filters if provided
     for (const [key, value] of searchParams.entries()) {
@@ -40,7 +80,7 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${chunks.length} relevant chunks`);
     
     // Format chunks to consistently use 'text' field and preserve metadata
-    const formattedChunks = chunks.map(chunk => ({
+    const formattedChunks = chunks.map((chunk: SearchChunk) => ({
       // Always use 'text' for content to match CLI convention
       text: chunk.text || chunk.content || '',
       // Include score for potential ranking
@@ -73,19 +113,21 @@ export async function GET(request: NextRequest) {
       sources: sources,
       query: query
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error processing search query:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to process search query';
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to process search query' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
 }
 
 // Enhanced source extraction to match CLI implementation
-function extractSourcesFromChunks(chunks: any[]) {
+function extractSourcesFromChunks(chunks: SearchChunk[]): Source[] {
   // Create a map to deduplicate sources
-  const sourceMap = new Map();
+  const sourceMap = new Map<string, Source>();
   
   // Add logging to see what we're working with
   console.log('First chunk for source extraction:', JSON.stringify(chunks[0], null, 2));
@@ -97,7 +139,7 @@ function extractSourcesFromChunks(chunks: any[]) {
     const docId = chunk.document_id;
     
     // Generate source information more directly, matching CLI pattern
-    const source = {
+    const source: Source = {
       id: docId,
       // Look for document filename in multiple possible locations
       title: chunk.documents?.filename || 
@@ -117,7 +159,7 @@ function extractSourcesFromChunks(chunks: any[]) {
 // Local function to generate completions
 async function generateCompletionResponse(
   query: string, 
-  context: any[],
+  context: FormattedChunk[],
   request: NextRequest
 ) {
   try {
@@ -140,7 +182,7 @@ async function generateCompletionResponse(
     }
     
     return await response.json();
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error generating completion:', error);
     // Return a simplified response in case of error
     return {

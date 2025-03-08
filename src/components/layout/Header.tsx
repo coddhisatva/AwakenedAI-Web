@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth';
-import { Search, Menu, Home, BookOpen, Info, User, History, Star, LogOut } from 'lucide-react';
+import { Search, Menu, Home, Info, User, History, Star, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 

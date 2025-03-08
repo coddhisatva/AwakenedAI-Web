@@ -50,8 +50,9 @@ export default function SignUpPage() {
       
       toast.success('Sign up successful! Please check your email to confirm your account.');
       router.push('/sign-in');
-    } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred');
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 // Initialize OpenAI on the server side
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Define proper interfaces for better type safety
+interface ContextItem {
+  text?: string;
+  content?: string;
+  metadata?: {
+    title?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface CompletionRequest {
+  query: string;
+  context: ContextItem[];
+  model?: string;
+  temperature?: number;
+}
 
 /**
  * Generate a completion from OpenAI based on provided context
@@ -12,7 +30,7 @@ const openai = new OpenAI({
  */
 export async function POST(request: NextRequest) {
   try {
-    const { query, context, model, temperature } = await request.json();
+    const { query, context, model, temperature } = await request.json() as CompletionRequest;
     
     if (!query || !context) {
       return NextResponse.json(
@@ -35,7 +53,7 @@ You may also draw on your general knowledge to supplement the provided context w
 Aim to be comprehensive, accurate, and helpful in your responses.`;
 
     // Update how we structure the messages array
-    const messages = [
+    const messages: ChatCompletionMessageParam[] = [
       {
         role: "system",
         content: systemPrompt,
@@ -69,12 +87,17 @@ Please answer the question. When using information from the context, cite the sp
       content: response.choices[0].message.content,
       usage: response.usage,
     });
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error generating completion:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate completion';
+    const errorDetails = error instanceof Error && 'response' in error 
+      ? (error as any).response?.data || {} 
+      : {};
+    
     return NextResponse.json(
       { 
-        error: error.message || 'Failed to generate completion',
-        details: error.response?.data || {}
+        error: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     );
@@ -82,7 +105,7 @@ Please answer the question. When using information from the context, cite the sp
 }
 
 // Format context items into a string for the prompt, matching CLI implementation
-function formatContextForLLM(context: any[]): string {
+function formatContextForLLM(context: ContextItem[]): string {
   return context.map((item, i) => {
     // Always prioritize the 'text' field to match CLI naming convention
     const content = item.text || item.content || "";
@@ -92,6 +115,3 @@ function formatContextForLLM(context: any[]): string {
     return `Context Item ${i+1}:\n${content}\n\nSource: ${metadata.title || "Unknown Document"}\n`;
   }).join("\n");
 }
-
-// Add logging to verify the context structure
-console.log('Context example item:', JSON.stringify(context[0], null, 2)); 

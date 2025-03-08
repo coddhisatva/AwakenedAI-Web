@@ -20,11 +20,11 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 export async function searchVectors(
   query: string,
   limit: number = 5,
-  filters: Record<string, any> = {}
+  filters: Record<string, string> = {}
 ) {
   try {
     console.log(`Generating embedding for query: "${query}"`);
-    const embedding = await getEmbedding(query);
+    const queryEmbedding = await getEmbedding(query);
     
     // Create a query to the chunks table with document join
     let vectorQuery = supabase

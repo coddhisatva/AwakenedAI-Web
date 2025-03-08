@@ -65,7 +65,7 @@ export function SearchForm({ initialQuery }: SearchFormProps) {
                   <SheetHeader>
                     <SheetTitle>Search Filters</SheetTitle>
                     <SheetDescription>
-                      Refine your search with specific filters to find exactly what you're looking for.
+                      Refine your search with specific filters to find exactly what you&apos;re looking for.
                     </SheetDescription>
                   </SheetHeader>
                   <div className="py-6 space-y-6">

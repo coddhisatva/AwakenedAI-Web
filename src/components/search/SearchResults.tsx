@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Search, AlertCircle, BookOpen, BookText, User, FileText, Tag, ExternalLink } from 'lucide-react';
+import { Search, AlertCircle, BookOpen, BookText, User, Tag, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SearchResultsProps {
@@ -45,9 +45,10 @@ export function SearchResults({ query }: SearchResultsProps) {
         const data = await response.json();
         console.log('Search results:', data);
         setResult(data);
-      } catch (err: any) {
+      } catch (err: Error | unknown) {
         console.error('Failed to fetch search results:', err);
-        setError(err.message || 'An error occurred while fetching results');
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching results';
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -99,7 +100,7 @@ export function SearchResults({ query }: SearchResultsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <p>No results found for your query: "<span className="font-medium">{query}</span>"</p>
+            <p>No results found for your query: &quot;<span className="font-medium">{query}</span>&quot;</p>
             <p className="mt-2 text-muted-foreground">Try using different keywords or check your spelling.</p>
           </CardContent>
         </Card>
@@ -115,7 +116,7 @@ export function SearchResults({ query }: SearchResultsProps) {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Search className="h-5 w-5 text-primary" />
-                <CardTitle>Results for: "<span className="text-primary font-semibold">{query}</span>"</CardTitle>
+                <CardTitle>Results for: &quot;<span className="text-primary font-semibold">{query}</span>&quot;</CardTitle>
               </div>
               {result.sources.length > 0 && (
                 <CardDescription>

@@ -16,6 +16,27 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
+// Define proper interfaces for better type safety
+interface ChunkResult {
+  id: string;
+  content?: string;
+  text?: string;
+  document_id: string;
+  similarity: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface DocumentResult {
+  id: string;
+  title?: string;
+  author?: string;
+  creator?: string;
+  subject?: string;
+  filename?: string;
+  path?: string;
+  metadata?: Record<string, unknown>;
+}
+
 /**
  * Generate embedding using OpenAI
  */
@@ -41,11 +62,16 @@ async function generateEmbedding(text: string): Promise<number[]> {
 export async function searchVectors(
   query: string,
   limit: number = 5,
-  filters: Record<string, any> = {}
+  filters: Record<string, string> = {}
 ) {
   try {
     console.log(`Generating embedding for query: "${query}"`);
     const embedding = await generateEmbedding(query);
+    
+    // Log filters for debugging even if not used yet
+    if (Object.keys(filters).length > 0) {
+      console.log('Filters provided but not yet implemented:', filters);
+    }
     
     console.log('Embedding generated, searching database...');
     
@@ -77,7 +103,7 @@ export async function searchVectors(
     // This follows the CLI pattern of joining document metadata
     if (data && data.length > 0) {
       // Extract unique document IDs from the results
-      const documentIds = [...new Set(data.map((chunk: any) => chunk.document_id))];
+      const documentIds = [...new Set(data.map((chunk: ChunkResult) => chunk.document_id))];
       
       console.log(`Fetching metadata for ${documentIds.length} documents`);
       
@@ -94,13 +120,13 @@ export async function searchVectors(
         console.log(`Retrieved ${documents.length} document records`);
         
         // Create a map for faster document lookups (CLI uses a similar approach)
-        const documentMap = documents.reduce((map: Record<string, any>, doc: any) => {
+        const documentMap = documents.reduce((map: Record<string, DocumentResult>, doc: DocumentResult) => {
           map[doc.id] = doc;
           return map;
         }, {});
         
         // Process chunks with document metadata like the CLI does
-        return data.map((chunk: any) => {
+        return data.map((chunk: ChunkResult) => {
           const document = documentMap[chunk.document_id] || null;
           
           // Return a structure that matches the CLI's format

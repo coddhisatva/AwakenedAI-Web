@@ -5,11 +5,10 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Search, Book, Database, Zap, BookOpen, Brain, Sparkles } from 'lucide-react';
+import { Search, Database, BookOpen, Brain } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -150,8 +149,8 @@ export default function Home() {
             <div className="md:w-1/2 bg-white p-6 rounded-xl shadow-sm border border-border">
               <blockquote className="space-y-4">
                 <p className="text-lg italic">
-                  "Awakened AI has transformed how I research spiritual concepts. It's like having 
-                  access to a personal library with expert guidance."
+                  &ldquo;Awakened AI has transformed how I research spiritual concepts. It&apos;s like having 
+                  access to a personal library with expert guidance.&rdquo;
                 </p>
                 <footer className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">

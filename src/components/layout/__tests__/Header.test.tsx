@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { Header } from '../Header';
-import { AuthContext } from '@/lib/auth';
 
 // Mock the useAuth hook
 jest.mock('@/lib/auth', () => ({
