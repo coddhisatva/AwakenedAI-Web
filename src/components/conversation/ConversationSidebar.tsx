@@ -42,14 +42,14 @@ export function ConversationSidebar({
     <div
       className={cn(
         'flex flex-col border-r border-border bg-background h-full relative transition-all duration-300 ease-in-out',
-        isCollapsed ? 'w-0 border-transparent' : 'w-64'
+        isCollapsed ? 'w-0 border-transparent' : 'w-56 md:w-60'
       )}
     >
       <div className="absolute right-0 top-4 transform translate-x-1/2 z-10">
         <Button
           variant="outline"
           size="icon"
-          className="h-6 w-6 rounded-full border border-border bg-background"
+          className="h-6 w-6 rounded-full border border-border bg-background shadow-sm"
           onClick={onCollapseToggle}
         >
           {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -58,18 +58,19 @@ export function ConversationSidebar({
 
       {!isCollapsed && (
         <>
-          <div className="p-4 border-b border-border">
+          <div className="p-3 border-b border-border">
             <Button
               onClick={onNewConversation}
               className="w-full flex items-center gap-2"
               variant="outline"
+              size="sm"
             >
               <PlusCircle className="h-4 w-4" />
               <span>New conversation</span>
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 p-2">
+          <ScrollArea className="flex-1 py-2">
             {!hasConversations ? (
               <div className="flex flex-col items-center justify-center h-full py-8 text-center text-muted-foreground">
                 <MessageCircle className="h-8 w-8 mb-2 opacity-50" />
@@ -77,7 +78,7 @@ export function ConversationSidebar({
                 <p className="text-xs mt-1">Start a new conversation to see it here</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 px-2">
                 {Object.entries(groupedConversations).map(([period, conversations]) => {
                   if (conversations.length === 0) return null;
                   
@@ -90,25 +91,25 @@ export function ConversationSidebar({
                         {conversations.map(conversation => (
                           <div
                             key={conversation.id}
-                            className="relative"
+                            className="relative group"
                             onMouseEnter={() => setHoveredConversationId(conversation.id)}
                             onMouseLeave={() => setHoveredConversationId(null)}
                           >
                             <Button
                               variant={currentConversationId === conversation.id ? "secondary" : "ghost"}
-                              className="w-full justify-start text-left truncate h-auto py-2 px-3"
+                              className="w-full justify-start text-left truncate h-auto py-1.5 px-2.5 text-sm"
                               onClick={() => onSelectConversation(conversation.id)}
                             >
-                              <MessageCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <MessageCircle className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
                               <span className="truncate text-sm">
                                 {conversation.title || 'New conversation'}
                               </span>
                             </Button>
-                            {(hoveredConversationId === conversation.id) && (
+                            {(hoveredConversationId === conversation.id || conversation.id === currentConversationId) && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute right-1 top-1 h-6 w-6 opacity-70 hover:opacity-100"
+                                className="absolute right-0.5 top-0.5 h-5 w-5 opacity-70 hover:opacity-100 invisible group-hover:visible"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onDeleteConversation(conversation.id);

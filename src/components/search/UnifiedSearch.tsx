@@ -13,7 +13,9 @@ import {
   BookOpen,
   Send,
   PlusCircle,
-  RefreshCw
+  RefreshCw,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import {
   Sheet,
@@ -462,148 +464,168 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
-          {/* Messages Display */}
-          {currentConversation && currentConversation.messages.length > 0 ? (
-            <div className="space-y-4">
-              {currentConversation.messages.map((message) => (
-                <Card 
-                  key={message.id} 
-                  className={`shadow-sm overflow-hidden ${
-                    message.role === 'user' 
-                      ? 'border-primary/20 bg-primary/5' 
-                      : 'border-border'
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="prose prose-neutral dark:prose-invert max-w-none">
-                      <div className="whitespace-pre-line">
-                        {message.content || (
-                          <div className="flex items-center space-x-2 text-muted-foreground">
-                            <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                            <span>Thinking...</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              {error && (
-                <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-secondary/20 rounded-lg border border-border/40">
-              <div className="flex flex-col items-center space-y-4 max-w-md mx-auto px-4">
-                <BookOpen className="h-12 w-12 text-primary/50" />
-                <h3 className="text-xl font-medium">Enter a query to begin</h3>
-                <p className="text-muted-foreground">
-                  Ask any question related to spirituality, philosophy, psychology, mysticism, or any other topic covered in our book collection.
-                </p>
-              </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile-only header with sidebar toggle */}
+        <div className="md:hidden flex items-center p-2 border-b border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+          {currentConversation && (
+            <div className="ml-2 text-sm font-medium truncate">
+              {currentConversation.title}
             </div>
           )}
-          
-          {/* Search Form and Action Buttons */}
-          <div className="space-y-4">
-            <Card className="border-border shadow-sm overflow-hidden bg-card">
-              <CardContent className="p-4">
-                <form onSubmit={handleSubmit} className="flex flex-col space-y-4" role="form">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={currentConversation && currentConversation.messages.length > 0 
-                          ? "Ask a follow-up question..." 
-                          : "What would you like to know?"}
-                        className="pl-9 pr-4 border-border focus-visible:ring-primary"
-                        disabled={isLoading || isStreaming}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Sheet>
-                        <SheetTrigger asChild>
-                          <Button variant="outline" type="button" className="flex items-center gap-1.5 border-border">
-                            <SlidersHorizontal className="h-4 w-4" />
-                            <span className="hidden sm:inline">Filters</span>
-                          </Button>
-                        </SheetTrigger>
-                        <SheetContent className="sm:max-w-md">
-                          <SheetHeader>
-                            <SheetTitle>Search Filters</SheetTitle>
-                            <SheetDescription>
-                              Refine your search with specific filters to find exactly what you&apos;re looking for.
-                            </SheetDescription>
-                          </SheetHeader>
-                          <div className="py-6 space-y-6">
-                            {/* Filters content - simplified for now */}
-                            <div className="space-y-4">
-                              <h3 className="text-sm font-medium flex items-center gap-2">
-                                <BookOpen className="h-4 w-4 text-primary" />
-                                <span>Book Categories</span>
-                              </h3>
+        </div>
+        
+        {/* Scrollable message area */}
+        <div className="flex-1 overflow-auto px-2 sm:px-3 md:px-4">
+          <div className="flex flex-col space-y-6 w-full">
+            {/* Messages Display */}
+            {currentConversation && currentConversation.messages.length > 0 ? (
+              <div className="space-y-4 pt-4">
+                {currentConversation.messages.map((message) => (
+                  <Card 
+                    key={message.id} 
+                    className={`shadow-sm overflow-hidden ${
+                      message.role === 'user' 
+                        ? 'border-primary/20 bg-primary/5' 
+                        : 'border-border'
+                    }`}
+                  >
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="prose prose-neutral dark:prose-invert max-w-none">
+                        <div className="whitespace-pre-line">
+                          {message.content || (
+                            <div className="flex items-center space-x-2 text-muted-foreground">
+                              <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                              <span>Thinking...</span>
                             </div>
-                          </div>
-                          <SheetFooter>
-                            <Button 
-                              type="button" 
-                              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
-                            >
-                              Apply Filters
-                            </Button>
-                          </SheetFooter>
-                        </SheetContent>
-                      </Sheet>
-                      <Button 
-                        type="submit" 
-                        disabled={isLoading || isStreaming || !query.trim()} 
-                        className="bg-primary hover:bg-primary/90 text-white"
-                      >
-                        {isLoading ? (
-                          <>
-                            <span className="mr-2">Searching</span>
-                            <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4 mr-2" />
-                            <span>{currentConversation && currentConversation.messages.length > 0 ? 'Send' : 'Search'}</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {error && (
+                  <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+                    {error}
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-            
-            {/* New Conversation Button - shown when there are messages */}
-            {currentConversation && currentConversation.messages.length > 0 && (
-              <div className="flex justify-center">
-                <Button
-                  onClick={handleNewConversation}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  disabled={isLoading || isStreaming}
-                >
-                  {isNewConversationStarting ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <PlusCircle className="h-4 w-4" />
-                  )}
-                  <span>New Conversation</span>
-                </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12 lg:py-16 my-4 bg-secondary/20 rounded-lg border border-border/40">
+                <div className="flex flex-col items-center space-y-4 max-w-lg mx-auto px-4">
+                  <BookOpen className="h-10 w-10 md:h-12 md:w-12 text-primary/50" />
+                  <h3 className="text-lg md:text-xl font-medium">Enter a query to begin</h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    Ask any question related to spirituality, philosophy, psychology, mysticism, or any other topic covered in our book collection.
+                  </p>
+                </div>
               </div>
             )}
           </div>
+        </div>
+        
+        {/* Search Form and Action Buttons - sticky at bottom */}
+        <div className="sticky bottom-0 pt-2 pb-3 px-2 sm:px-3 md:px-4 bg-background z-10 border-t border-border/30">
+          <Card className="border-border shadow-sm overflow-hidden bg-card">
+            <CardContent className="p-2 sm:p-3">
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-3" role="form">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={currentConversation && currentConversation.messages.length > 0 
+                        ? "Ask a follow-up question..." 
+                        : "What would you like to know?"}
+                      className="pl-9 pr-4 border-border focus-visible:ring-primary"
+                      disabled={isLoading || isStreaming}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" type="button" className="flex items-center gap-1.5 border-border h-10">
+                          <SlidersHorizontal className="h-4 w-4" />
+                          <span className="hidden sm:inline">Filters</span>
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent className="sm:max-w-md">
+                        <SheetHeader>
+                          <SheetTitle>Search Filters</SheetTitle>
+                          <SheetDescription>
+                            Refine your search with specific filters to find exactly what you&apos;re looking for.
+                          </SheetDescription>
+                        </SheetHeader>
+                        <div className="py-6 space-y-6">
+                          {/* Filters content - simplified for now */}
+                          <div className="space-y-4">
+                            <h3 className="text-sm font-medium flex items-center gap-2">
+                              <BookOpen className="h-4 w-4 text-primary" />
+                              <span>Book Categories</span>
+                            </h3>
+                          </div>
+                        </div>
+                        <SheetFooter>
+                          <Button 
+                            type="button" 
+                            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
+                          >
+                            Apply Filters
+                          </Button>
+                        </SheetFooter>
+                      </SheetContent>
+                    </Sheet>
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading || isStreaming || !query.trim()} 
+                      className="bg-primary hover:bg-primary/90 text-white h-10"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="mr-2">Searching</span>
+                          <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          <span>{currentConversation && currentConversation.messages.length > 0 ? 'Send' : 'Search'}</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+          
+          {/* New Conversation Button - shown when there are messages */}
+          {currentConversation && currentConversation.messages.length > 0 && (
+            <div className="flex justify-center mt-3">
+              <Button
+                onClick={handleNewConversation}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                disabled={isLoading || isStreaming}
+              >
+                {isNewConversationStarting ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="h-4 w-4" />
+                )}
+                <span>New Conversation</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
