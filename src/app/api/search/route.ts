@@ -42,6 +42,7 @@ interface Source {
 }
 
 export async function GET(request: NextRequest) {
+  console.time('total-search-time');
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
   
@@ -64,12 +65,13 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Searching for:', query);
-    console.log('With filters:', filters);
-    
+    console.time('vector-search-time');
     // Retrieve relevant chunks from vector database with proper error handling
     const chunks = await searchVectors(query, 5, filters);
+    console.timeEnd('vector-search-time');
     
     if (!chunks || chunks.length === 0) {
+      console.timeEnd('total-search-time');
       console.log('No results found for query:', query);
       return NextResponse.json({
         content: "I couldn't find any information related to your query.",
@@ -80,6 +82,7 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${chunks.length} relevant chunks`);
     
     // Format chunks to consistently use 'text' field and preserve metadata
+    console.time('formatting-chunks-time');
     const formattedChunks = chunks.map((chunk: SearchChunk) => ({
       // Always use 'text' for content to match CLI convention
       text: chunk.text || chunk.content || '',
@@ -94,19 +97,19 @@ export async function GET(request: NextRequest) {
         document_id: chunk.document_id
       }
     }));
+    console.timeEnd('formatting-chunks-time');
     
     // Extract source information for attribution
+    console.time('extract-sources-time');
     const sources = extractSourcesFromChunks(chunks);
-    
-    // Add this after retrieving chunks
-    console.log('Sample chunk data:', JSON.stringify(chunks[0], null, 2));
-    
-    // Add logging to verify data structure
-    console.log('Formatted chunk example:', JSON.stringify(formattedChunks[0], null, 2));
+    console.timeEnd('extract-sources-time');
     
     // Generate response using the completion API
+    console.time('completion-api-time');
     const responseData = await generateCompletionResponse(query, formattedChunks, request);
+    console.timeEnd('completion-api-time');
     
+    console.timeEnd('total-search-time');
     // Return the generated response with source attribution
     return NextResponse.json({
       content: responseData.content,
@@ -114,6 +117,7 @@ export async function GET(request: NextRequest) {
       query: query
     });
   } catch (error: Error | unknown) {
+    console.timeEnd('total-search-time');
     console.error('Error processing search query:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to process search query';
     

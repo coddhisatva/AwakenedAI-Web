@@ -64,9 +64,12 @@ export async function searchVectors(
   limit: number = 5,
   filters: Record<string, string> = {}
 ) {
+  console.time('supabase-search-total');
   try {
     console.log(`Generating embedding for query: "${query}"`);
+    console.time('embedding-generation');
     const embedding = await generateEmbedding(query);
+    console.timeEnd('embedding-generation');
     
     // Log filters for debugging even if not used yet
     if (Object.keys(filters).length > 0) {
@@ -76,11 +79,12 @@ export async function searchVectors(
     console.log('Embedding generated, searching database...');
     
     // Use the match_chunks RPC function with specific parameters to match CLI
-    // The CLI uses specific threshold parameters
+    console.time('rpc-vector-search');
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
       match_count: limit
     });
+    console.timeEnd('rpc-vector-search');
     
     if (error) {
       console.error('Error performing vector search:', error);
@@ -89,18 +93,7 @@ export async function searchVectors(
     
     console.log(`Search returned ${data?.length || 0} results`);
     
-    // Log raw chunk data to verify content retrieval
-    if (data && data.length > 0) {
-      console.log('First raw chunk data:', {
-        id: data[0].id,
-        document_id: data[0].document_id,
-        content_preview: data[0].content ? data[0].content.substring(0, 100) + '...' : 'No content found!',
-        similarity: data[0].similarity
-      });
-    }
-    
     // If we have results but need document info, fetch the related documents
-    // This follows the CLI pattern of joining document metadata
     if (data && data.length > 0) {
       // Extract unique document IDs from the results
       const documentIds = [...new Set(data.map((chunk: ChunkResult) => chunk.document_id))];
@@ -108,40 +101,41 @@ export async function searchVectors(
       console.log(`Fetching metadata for ${documentIds.length} documents`);
       
       // Fetch the related documents with all relevant fields
-      // This matches the fields the CLI retrieves
+      console.time('document-metadata-fetch');
       const { data: documents, error: docError } = await supabase
         .from('documents')
         .select('id, title, author, creator, subject, filename, path, metadata')
         .in('id', documentIds);
+      console.timeEnd('document-metadata-fetch');
       
       if (docError) {
         console.error('Error fetching documents:', docError);
       } else if (documents) {
         console.log(`Retrieved ${documents.length} document records`);
         
-        // Create a map for faster document lookups (CLI uses a similar approach)
+        console.time('process-chunks-with-metadata');
+        // Create a map for faster document lookups
         const documentMap = documents.reduce((map: Record<string, DocumentResult>, doc: DocumentResult) => {
           map[doc.id] = doc;
           return map;
         }, {});
         
-        // Process chunks with document metadata like the CLI does
-        return data.map((chunk: ChunkResult) => {
+        // Process chunks with document metadata
+        const result = data.map((chunk: ChunkResult) => {
           const document = documentMap[chunk.document_id] || null;
           
-          // Return a structure that matches the CLI's format
           return {
             // Basic chunk data
             id: chunk.id,
             document_id: chunk.document_id,
-            text: chunk.content || '', // Standardize on text field but preserve content
-            content: chunk.content || '', // Keep original content field
+            text: chunk.content || '',
+            content: chunk.content || '',
             similarity: chunk.similarity,
             
             // Include full document record
             documents: document,
             
-            // Extract key metadata fields for easier access (matches CLI pattern)
+            // Extract key metadata fields for easier access
             metadata: {
               title: document?.title || 'Unknown Document',
               author: document?.author || document?.creator || '',
@@ -151,14 +145,18 @@ export async function searchVectors(
             }
           };
         });
+        console.timeEnd('process-chunks-with-metadata');
+        console.timeEnd('supabase-search-total');
+        return result;
       }
     }
     
     // If no document join was performed, still format the base results
+    console.timeEnd('supabase-search-total');
     return data.map((chunk: any) => ({
       id: chunk.id,
       document_id: chunk.document_id,
-      text: chunk.content || '', // Standardize on text for consistency
+      text: chunk.content || '',
       content: chunk.content || '',
       similarity: chunk.similarity,
       metadata: {
@@ -167,6 +165,7 @@ export async function searchVectors(
       }
     })) || [];
   } catch (error) {
+    console.timeEnd('supabase-search-total');
     console.error('Error in searchVectors:', error);
     throw error;
   }

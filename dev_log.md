@@ -19,3 +19,5 @@ The bot was not able to find any context, and we spent a lot of time trying to r
 
 ## Day 6 (March 8)
 -Updated UI to version 1 from default version 0
+-Set up Vercel project
+-Prod link from Vercel is always up

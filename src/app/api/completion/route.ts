@@ -29,6 +29,7 @@ interface CompletionRequest {
  * Matches the structure from the processing repo
  */
 export async function POST(request: NextRequest) {
+  console.time('completion-total-time');
   try {
     const { query, context, model, temperature } = await request.json() as CompletionRequest;
     
@@ -44,7 +45,9 @@ export async function POST(request: NextRequest) {
     console.log('First context item sample:', JSON.stringify(context[0]).substring(0, 200));
 
     // Format context exactly like the CLI version
+    console.time('format-context-time');
     const formattedContext = formatContextForLLM(context);
+    console.timeEnd('format-context-time');
 
     // Update system prompt to include citation guidance while allowing broader knowledge
     const systemPrompt = `You are Awakened AI, a knowledgeable assistant that prioritizes information from the provided context when available.
@@ -70,11 +73,13 @@ Please answer the question. When using information from the context, cite the sp
     ];
 
     // Then use the messages in the OpenAI call
+    console.time('openai-api-call');
     const response = await openai.chat.completions.create({
       model: model || "gpt-4-turbo",
       temperature: temperature || 0.1,
       messages: messages,
     });
+    console.timeEnd('openai-api-call');
 
     console.log('Completion generated successfully');
 
@@ -83,11 +88,14 @@ Please answer the question. When using information from the context, cite the sp
     console.log('Sample context item:', JSON.stringify(context[0], null, 2));
     console.log('Formatted context preview:', formattedContext.substring(0, 200) + '...');
 
+    console.timeEnd('completion-total-time');
+
     return NextResponse.json({
       content: response.choices[0].message.content,
       usage: response.usage,
     });
   } catch (error: Error | unknown) {
+    console.timeEnd('completion-total-time');
     console.error('Error generating completion:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to generate completion';
     const errorDetails = error instanceof Error && 'response' in error 
