@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 
 interface SearchResultsProps {
   query: string;
+  onStartConversation?: (response?: string) => void;
 }
 
 interface ResultSource {
@@ -46,7 +47,7 @@ interface SearchResult {
   isStreaming?: boolean;
 }
 
-export function SearchResults({ query }: SearchResultsProps) {
+export function SearchResults({ query, onStartConversation }: SearchResultsProps) {
   const [result, setResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompletionLoading, setIsCompletionLoading] = useState(false);

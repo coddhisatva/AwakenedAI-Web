@@ -23,6 +23,7 @@ interface ContextItem {
 interface CompletionRequest {
   query: string;
   context: ContextItem[];
+  conversation_history?: { role: string; content: string }[];
   temperature?: number;
   max_tokens?: number;
 }
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     const requestData: CompletionRequest = await request.json();
     
     // Validate required parameters
-    const { query, context } = requestData;
+    const { query, context, conversation_history } = requestData;
     if (!query || !context) {
       console.log(`[${new Date().toISOString()}] Missing required parameters`);
       return NextResponse.json(
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
     console.log(`[${new Date().toISOString()}] Processing query: "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`);
     console.log(`[${new Date().toISOString()}] Context items: ${context.length}`);
     console.log(`[${new Date().toISOString()}] First context item: ${JSON.stringify(context[0]?.text?.substring(0, 100) || 'N/A')}...`);
+    console.log(`[${new Date().toISOString()}] Conversation history: ${conversation_history ? conversation_history.length : 'None'}`);
     
     // Format context for the model
     console.log(`[${new Date().toISOString()}] Formatting context for model...`);
@@ -74,13 +76,32 @@ export async function POST(request: NextRequest) {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: 'You are a helpful AI assistant that provides accurate and concise information based on the provided context. When answering:\n\n1. Focus on the information present in the context.\n2. If the context doesn\'t provide enough information to answer the question fully, acknowledge the limitations.\n3. Always start your response with a complete sentence, using proper capitalization.\n4. Use proper punctuation and paragraph breaks for readability.\n5. Provide a coherent, well-structured response that fully addresses the query.'
-      },
-      {
-        role: 'user',
-        content: `I need information about the following query: "${query}"\n\nHere is the relevant context:\n${formattedContext}`
+        content: 'You are a helpful AI assistant that provides accurate and concise information based on the provided context. When answering:\n\n1. Focus on the information present in the context.\n2. If the context doesn\'t provide enough information to answer the question fully, acknowledge the limitations.\n3. Always start your response with a complete sentence, using proper capitalization.\n4. Use proper punctuation and paragraph breaks for readability.\n5. Provide a coherent, well-structured response that fully addresses the query.\n6. Maintain continuity with any previous conversation if provided.'
       }
     ];
+    
+    // Add conversation history if available
+    if (conversation_history && conversation_history.length > 0) {
+      // Add previous messages from conversation history
+      conversation_history.forEach(msg => {
+        messages.push({
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content
+        });
+      });
+      
+      // Add the current query with context
+      messages.push({
+        role: 'user',
+        content: `I need information about the following query: "${query}"\n\nHere is the relevant context:\n${formattedContext}`
+      });
+    } else {
+      // No conversation history, just add the query
+      messages.push({
+        role: 'user',
+        content: `I need information about the following query: "${query}"\n\nHere is the relevant context:\n${formattedContext}`
+      });
+    }
     
     // Create the transform stream for the response
     const stream = new TransformStream();
