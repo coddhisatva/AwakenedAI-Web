@@ -11,7 +11,9 @@ import {
   Search,
   SlidersHorizontal,
   BookOpen,
-  Send
+  Send,
+  PlusCircle,
+  RefreshCw
 } from 'lucide-react';
 import {
   Sheet,
@@ -41,6 +43,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNewConversationStarting, setIsNewConversationStarting] = useState(false);
   
   // Handle search form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -207,8 +210,45 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
     }
   };
   
+  // Start a new conversation
+  const startNewConversation = () => {
+    if (isLoading || isStreaming) return;
+    
+    setIsNewConversationStarting(true);
+    
+    // Clear the current conversation
+    setMessages([]);
+    setQuery('');
+    setError(null);
+    
+    // Animation effect - turn off the "starting" indicator after a brief delay
+    setTimeout(() => {
+      setIsNewConversationStarting(false);
+    }, 500);
+  };
+  
   return (
     <div className="flex flex-col space-y-8">
+      {/* New Conversation Button - only shown when there are messages */}
+      {messages.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            onClick={startNewConversation}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            disabled={isLoading || isStreaming}
+          >
+            {isNewConversationStarting ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlusCircle className="h-4 w-4" />
+            )}
+            <span>New Conversation</span>
+          </Button>
+        </div>
+      )}
+      
       {/* Messages Display */}
       {messages.length > 0 && (
         <div className="space-y-4">
