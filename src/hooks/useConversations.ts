@@ -42,12 +42,13 @@ export function useConversations() {
   }, []);
 
   // Start a new conversation
-  const startNewConversation = useCallback((firstMessage: string): Conversation => {
-    const conversation = conversationService.createConversation(firstMessage);
+  const startNewConversation = useCallback((firstMessage?: string): Conversation => {
+    // Create a new conversation with a default empty title
+    const conversation = conversationService.createConversation(firstMessage || '');
     setCurrentConversation(conversation);
     
     // If first message was provided, add it to the conversation
-    if (firstMessage.trim()) {
+    if (firstMessage && firstMessage.trim()) {
       const message: Message = {
         id: uuidv4(),
         role: 'user',

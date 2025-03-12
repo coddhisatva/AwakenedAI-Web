@@ -36,6 +36,10 @@ export type TimePeriod = 'today' | 'yesterday' | 'previous7Days' | 'older';
 
 // Helper to generate title from first message
 const generateTitle = (message: string): string => {
+  if (!message || !message.trim()) {
+    return 'New conversation';
+  }
+  
   // Remove new lines and extra spaces
   const cleanedMessage = message.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
   

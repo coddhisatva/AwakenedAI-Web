@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Card, 
   CardContent
@@ -28,6 +28,7 @@ import { useConversations } from '@/hooks/useConversations';
 import { ConversationSidebar } from '@/components/conversation/ConversationSidebar';
 import { Message, conversationService } from '@/lib/conversation';
 import { debounce } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) {
   // Search form state
@@ -93,14 +94,26 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
     }, 150) // 150ms debounce time provides smooth updates without too many re-renders
   ).current;
   
-  // Effect to initialize a new conversation if none exists
+  // Effect to initialize a new conversation if none exists and process initial query
   useEffect(() => {
     // If there's an initial query and no current conversation,
-    // create a new conversation when the component mounts
-    if (initialQuery && initialQuery.trim() && !currentConversation) {
-      startNewConversation(initialQuery);
+    // create a new conversation when the component mounts and send the query
+    if (initialQuery && initialQuery.trim()) {
+      const initializeWithQuery = async () => {
+        if (!currentConversation) {
+          // Create an empty conversation and then send the message
+          const newConversation = startNewConversation('');
+          if (newConversation) {
+            conversationIdRef.current = newConversation.id;
+            await sendMessage(initialQuery);
+          }
+        }
+      };
+      
+      initializeWithQuery();
     }
-  }, [initialQuery, currentConversation, startNewConversation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery, currentConversation]);  // We only want this to run on mount or if initialQuery changes
   
   // Clean up the debounced function on unmount
   useEffect(() => {
@@ -114,11 +127,19 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
     e.preventDefault();
     if (!query.trim()) return;
     
-    // If there's no current conversation, start a new one
+    // If there's no current conversation, start a new one but don't add the message yet
+    // We'll let sendMessage handle it to avoid duplicate messages
     if (!currentConversation) {
-      startNewConversation(query);
+      const newConversation = startNewConversation('');
+      
+      // Make sure we have the new conversation ID for reference
+      if (newConversation) {
+        conversationIdRef.current = newConversation.id;
+      }
     }
     
+    // Now send the message - this will add it to the current conversation
+    // and process it to get a response
     await sendMessage(query);
     setQuery(''); // Clear input after sending
   };
@@ -129,18 +150,49 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       setIsLoading(true);
       setError(null);
       
+      // Get the current conversation ID either from state or from our ref
+      const targetConversationId = currentConversation?.id || conversationIdRef.current;
+      
+      // If we still don't have a conversation, create one now
+      if (!targetConversationId) {
+        const newConversation = startNewConversation('');
+        if (!newConversation) {
+          throw new Error('Failed to create a new conversation');
+        }
+        conversationIdRef.current = newConversation.id;
+      }
+      
       // Add user message to conversation
       const userMessage: Omit<Message, 'id' | 'timestamp'> = {
         role: 'user',
         content: messageText,
       };
       
-      const updatedConversation = addMessage(userMessage);
+      // If we have a current conversation in state, use that
+      // Otherwise use the conversation service directly with our saved ID
+      let updatedConversation;
+      if (currentConversation) {
+        updatedConversation = addMessage(userMessage);
+      } else if (conversationIdRef.current) {
+        // Add the message directly using the conversation service
+        const message: Message = {
+          ...userMessage,
+          id: uuidv4(),
+          timestamp: new Date()
+        };
+        updatedConversation = conversationService.addMessage(conversationIdRef.current, message);
+        
+        // Make sure our local state is updated
+        if (updatedConversation) {
+          loadConversation(conversationIdRef.current);
+        }
+      }
+      
       if (!updatedConversation) {
         throw new Error('Failed to add message to conversation');
       }
       
-      // Store conversation ID for later use
+      // Store conversation ID for later use (if not already set)
       conversationIdRef.current = updatedConversation.id;
       
       // Add temporary assistant message that will be updated with streaming content
@@ -149,7 +201,24 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         content: '',
       };
       
-      const withAssistantMessage = addMessage(tempAssistantMessage);
+      // Similar approach for the assistant message
+      let withAssistantMessage;
+      if (currentConversation) {
+        withAssistantMessage = addMessage(tempAssistantMessage);
+      } else if (conversationIdRef.current) {
+        const message: Message = {
+          ...tempAssistantMessage,
+          id: uuidv4(),
+          timestamp: new Date()
+        };
+        withAssistantMessage = conversationService.addMessage(conversationIdRef.current, message);
+        
+        // Update our local state
+        if (withAssistantMessage) {
+          loadConversation(conversationIdRef.current);
+        }
+      }
+      
       if (!withAssistantMessage) {
         throw new Error('Failed to add assistant message to conversation');
       }
@@ -276,9 +345,8 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
                   // Force a reload of the conversation to update UI
                   loadConversation(conversationIdRef.current);
                   
-                  // Reset the refs
+                  // Reset the assistant message ID ref since we're done with this message
                   assistantMessageIdRef.current = null;
-                  conversationIdRef.current = null;
                 }
               }
               
@@ -293,7 +361,10 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       }
     } catch (err: any) {
       console.error('Failed to send message:', err);
-      setError('Failed to send message. Please try again.');
+      
+      // More descriptive error message
+      const errorMessage = err.message || 'Unknown error';
+      setError(`Failed to process query: ${errorMessage}`);
       
       // Cancel any pending debounced updates
       debouncedUpdateStreamingMessage.cancel();
@@ -303,12 +374,12 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         // Get the current conversation
         const conversation = conversationService.getConversation(conversationIdRef.current);
         if (conversation) {
-          // Update the message content
+          // Update the message content with a more descriptive error
           const updatedMessages = conversation.messages.map(msg => {
             if (msg.id === assistantMessageIdRef.current) {
               return {
                 ...msg,
-                content: 'Sorry, there was an error generating a response. Please try again.'
+                content: `Sorry, there was an error processing your query. ${errorMessage.includes('search') ? 'The search service might be experiencing issues.' : 'Please try again later or rephrase your question.'}`
               };
             }
             return msg;
@@ -326,15 +397,36 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
           
           // Force a reload of the conversation to update UI
           loadConversation(conversationIdRef.current);
+        }
+      }
+      
+      // If this was a brand new conversation with only the error message,
+      // consider deleting it or marking it specially
+      if (conversationIdRef.current) {
+        const conversation = conversationService.getConversation(conversationIdRef.current);
+        if (conversation && conversation.messages.length <= 2) {
+          // It's a new conversation with just the user message and error response
+          // We could delete it here, but for now we'll keep it and let the user decide
           
-          // Reset the refs
-          assistantMessageIdRef.current = null;
-          conversationIdRef.current = null;
+          // Optionally add a flag to the conversation to indicate it had an error
+          // This could be used for UI treatment or future retry logic
         }
       }
     } finally {
+      // Reset loading states
       setIsLoading(false);
       setIsStreaming(false);
+      
+      // Ensure we have the latest conversation data displayed
+      if (conversationIdRef.current) {
+        loadConversation(conversationIdRef.current);
+      }
+      
+      // Reset references if we're done with streaming
+      if (!isStreaming) {
+        assistantMessageIdRef.current = null;
+        // Don't reset conversationIdRef.current here, as we may need it for future messages
+      }
     }
   };
   
