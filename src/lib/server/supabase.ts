@@ -104,7 +104,7 @@ export async function searchVectors(
       console.time('document-metadata-fetch');
       const { data: documents, error: docError } = await supabase
         .from('documents')
-        .select('id, title, author, creator, subject, filename, path, metadata')
+        .select('id, title, author, subject, filename, path, metadata')
         .in('id', documentIds);
       console.timeEnd('document-metadata-fetch');
       
@@ -138,7 +138,7 @@ export async function searchVectors(
             // Extract key metadata fields for easier access
             metadata: {
               title: document?.title || 'Unknown Document',
-              author: document?.author || document?.creator || '',
+              author: document?.author || '',
               subject: document?.subject || '',
               source: document?.filename || document?.path || '',
               document_id: chunk.document_id
