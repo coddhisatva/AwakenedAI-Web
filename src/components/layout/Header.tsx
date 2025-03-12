@@ -12,9 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth';
-import { Search, Menu, Home, Info, User, History, Star, LogOut } from 'lucide-react';
+import { Menu, Info, User, History, Star, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Input } from '@/components/ui/input';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -27,14 +26,6 @@ export function Header() {
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Awakened AI</span>
           </Link>
           <nav className="hidden md:flex gap-6">
-            <Link href="/" className="text-sm font-medium hover:text-primary flex items-center gap-1.5 transition-colors">
-              <Home size={16} />
-              <span>Home</span>
-            </Link>
-            <Link href="/search" className="text-sm font-medium hover:text-primary flex items-center gap-1.5 transition-colors">
-              <Search size={16} />
-              <span>Search</span>
-            </Link>
             <Link href="/about" className="text-sm font-medium hover:text-primary flex items-center gap-1.5 transition-colors">
               <Info size={16} />
               <span>About</span>
@@ -43,18 +34,6 @@ export function Header() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex mr-2">
-            <form action="/search" className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search"
-                name="q"
-                placeholder="Search knowledge..."
-                className="w-full rounded-full bg-muted pl-9 focus-visible:ring-primary"
-              />
-            </form>
-          </div>
-          
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -107,20 +86,6 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[250px] sm:w-[300px]">
               <nav className="flex flex-col gap-4 mt-8">
-                <Link 
-                  href="/" 
-                  className="flex items-center gap-2 text-sm font-medium px-2 py-1.5 hover:bg-accent rounded-md"
-                >
-                  <Home size={18} />
-                  Home
-                </Link>
-                <Link 
-                  href="/search" 
-                  className="flex items-center gap-2 text-sm font-medium px-2 py-1.5 hover:bg-accent rounded-md"
-                >
-                  <Search size={18} />
-                  Search
-                </Link>
                 <Link 
                   href="/about" 
                   className="flex items-center gap-2 text-sm font-medium px-2 py-1.5 hover:bg-accent rounded-md"
