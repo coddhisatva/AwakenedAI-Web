@@ -73,27 +73,37 @@ Please answer the question. When using information from the context, cite the sp
     ];
 
     // Then use the messages in the OpenAI call
+    console.log('RIGHT BEFORE OpenAI API call - timestamp:', new Date().toISOString());
     console.time('openai-api-call');
-    const response = await openai.chat.completions.create({
-      model: model || "gpt-4-turbo",
-      temperature: temperature || 0.1,
-      messages: messages,
-    });
-    console.timeEnd('openai-api-call');
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        temperature: temperature || 0.1,
+        messages: messages,
+      });
+      console.timeEnd('openai-api-call');
+      console.log('RIGHT AFTER OpenAI API call - timestamp:', new Date().toISOString());
+      console.log('OpenAI API response received successfully!');
+      console.log('Response length:', response.choices[0].message.content?.length || 0);
 
-    console.log('Completion generated successfully');
+      console.log('Completion generated successfully');
 
-    // Add this logging in the completion route
-    console.log('Received context length:', context.length);
-    console.log('Sample context item:', JSON.stringify(context[0], null, 2));
-    console.log('Formatted context preview:', formattedContext.substring(0, 200) + '...');
-
-    console.timeEnd('completion-total-time');
-
-    return NextResponse.json({
-      content: response.choices[0].message.content,
-      usage: response.usage,
-    });
+      // Add this logging in the completion route
+      console.log('Received context length:', context.length);
+      console.log('Sample context item:', JSON.stringify(context[0], null, 2));
+      console.log('Formatted context preview:', formattedContext.substring(0, 200) + '...');
+      
+      return NextResponse.json({
+        content: response.choices[0].message.content,
+        usage: response.usage,
+      });
+    } catch (completionError) {
+      console.timeEnd('openai-api-call');
+      console.log('ERROR during OpenAI API call:', completionError);
+      console.log('Error type:', typeof completionError);
+      console.log('Error details:', JSON.stringify(completionError, null, 2));
+      throw completionError;
+    }
   } catch (error: Error | unknown) {
     console.timeEnd('completion-total-time');
     console.error('Error generating completion:', error);

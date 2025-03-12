@@ -105,17 +105,32 @@ export async function GET(request: NextRequest) {
     const sources = extractSourcesFromChunks(chunks);
     console.timeEnd('extract-sources-time');
     
-    // Generate response using the completion API
-    console.time('completion-api-time');
-    const responseData = await generateCompletionResponse(query, formattedChunks, request);
-    console.timeEnd('completion-api-time');
-    
+    // Return results immediately without waiting for completion
     console.timeEnd('total-search-time');
-    // Return the generated response with source attribution
+    console.log('Returning search results immediately - starting background completion process');
+    
+    // Start background completion (won't block the response)
+    const completionPromise = generateCompletionResponse(query, formattedChunks, request)
+      .then(completionData => {
+        console.log('Background completion process finished successfully');
+      })
+      .catch(error => {
+        console.error('Background completion process error:', error);
+      });
+    
+    // Return immediate results with search data but without waiting for completion
     return NextResponse.json({
-      content: responseData.content,
-      sources: sources,
-      query: query
+      status: "search_complete",
+      message: "Search complete, generating AI response...",
+      raw_results: {
+        chunks: formattedChunks.map((chunk: FormattedChunk) => ({
+          text: chunk.text.substring(0, 300) + "...",  // Truncate for preview
+          score: chunk.score,
+          metadata: chunk.metadata
+        })),
+        query: query,
+        sources: sources
+      }
     });
   } catch (error: Error | unknown) {
     console.timeEnd('total-search-time');
@@ -176,7 +191,7 @@ async function generateCompletionResponse(
       body: JSON.stringify({
         query,
         context,
-        model: 'gpt-4-turbo',
+        model: 'gpt-4o',
         temperature: 0.1,  // Lower temperature to match CLI version
       }),
     });
