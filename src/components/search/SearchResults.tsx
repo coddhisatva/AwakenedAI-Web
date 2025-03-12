@@ -150,14 +150,20 @@ export function SearchResults({ query }: SearchResultsProps) {
           
           // Process the chunk
           const chunk = decoder.decode(value);
-          const lines = chunk.split('\\n').filter(line => line.trim());
+          const lines = chunk.split('\n').filter(line => line.trim());
           
           for (const line of lines) {
             try {
               const parsedChunk = JSON.parse(line);
               
               if (parsedChunk.type === 'chunk') {
-                accumulatedContent += parsedChunk.content;
+                // Use the fullContent if available for more accurate rendering
+                if (parsedChunk.fullContent) {
+                  accumulatedContent = parsedChunk.fullContent;
+                } else {
+                  accumulatedContent += parsedChunk.content;
+                }
+                
                 setStreamedContent(accumulatedContent);
                 
                 // Update the result with streamed content
@@ -167,10 +173,12 @@ export function SearchResults({ query }: SearchResultsProps) {
                   isStreaming: true
                 } : null);
               } else if (parsedChunk.type === 'done') {
-                // Final content
+                // Final content - use the complete content from the server
+                const finalContent = parsedChunk.content || accumulatedContent;
+                
                 setResult(prev => prev ? {
                   ...prev,
-                  content: parsedChunk.content || accumulatedContent,
+                  content: finalContent,
                   isStreaming: false
                 } : null);
                 

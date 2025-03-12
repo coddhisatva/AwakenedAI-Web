@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: 'You are a helpful AI assistant that provides accurate and concise information based on the provided context. When answering, focus on the information present in the context. If the context doesn\'t provide enough information to answer the question fully, acknowledge the limitations of what you can provide.'
+        content: 'You are a helpful AI assistant that provides accurate and concise information based on the provided context. When answering:\n\n1. Focus on the information present in the context.\n2. If the context doesn\'t provide enough information to answer the question fully, acknowledge the limitations.\n3. Always start your response with a complete sentence, using proper capitalization.\n4. Use proper punctuation and paragraph breaks for readability.\n5. Provide a coherent, well-structured response that fully addresses the query.'
       },
       {
         role: 'user',
@@ -112,6 +112,10 @@ export async function POST(request: NextRequest) {
               encoder({
                 type: 'chunk',
                 content: content,
+                // Include the current position of this chunk in the full response
+                position: fullResponse.length - content.length,
+                // Include full accumulated content for safer client-side rendering
+                fullContent: fullResponse,
               })
             );
           }
@@ -121,11 +125,14 @@ export async function POST(request: NextRequest) {
         const apiCallDuration = Date.now() - apiCallStartTime;
         console.log(`[${new Date().toISOString()}] OpenAI API call completed in ${apiCallDuration}ms`);
         
+        // Format and clean up the full response
+        const formattedResponse = fullResponse.trim();
+        
         // Send the completion message
         await writer.write(
           encoder({
             type: 'done',
-            content: fullResponse,
+            content: formattedResponse,
           })
         );
         
