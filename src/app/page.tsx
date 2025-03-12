@@ -30,17 +30,15 @@ export default function Home() {
               A comprehensive AI knowledge system built on thousands of curated books spanning 
               mysticism, spirituality, history, psychology, alternative health, philosophy, and more (Alpha).
             </p>
+            
+            {/* Search Component - added back here */}
+            <div className="w-full pt-4">
+              <UnifiedSearch embedded={true} />
+            </div>
           </div>
         </div>
       </section>
       
-      {/* Search Section - Full Width */}
-      <section className="w-full mx-auto -mt-20">
-        <div className="w-full">
-          <UnifiedSearch />
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="py-12 bg-secondary/30">
         <div className="container px-4 mx-auto">

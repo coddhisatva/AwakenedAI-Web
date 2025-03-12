@@ -32,7 +32,7 @@ import { Message, conversationService } from '@/lib/conversation';
 import { debounce } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) {
+export function UnifiedSearch({ initialQuery = '', embedded = false }: { initialQuery?: string; embedded?: boolean }) {
   // Search form state
   const [query, setQuery] = useState(initialQuery);
   const [isLoading, setIsLoading] = useState(false);
@@ -451,7 +451,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
   };
   
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full max-w-none overflow-hidden">
+    <div className={`flex ${embedded ? 'h-[60vh] md:h-[70vh]' : 'h-[calc(100vh-4rem)]'} w-full max-w-none overflow-hidden`}>
       {/* Conversation History Sidebar */}
       <ConversationSidebar 
         groupedConversations={groupedConversations}
