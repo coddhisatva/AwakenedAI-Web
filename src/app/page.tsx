@@ -35,8 +35,10 @@ export default function Home() {
       </section>
       
       {/* Search Section - Full Width */}
-      <section className="w-full mx-0 -mt-4">
-        <UnifiedSearch embedded={true} />
+      <section className="w-full px-0 sm:px-2 md:px-4 -mt-4">
+        <div className="relative">
+          <UnifiedSearch embedded={true} />
+        </div>
       </section>
       
       {/* Features Section */}

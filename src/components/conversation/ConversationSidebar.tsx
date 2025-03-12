@@ -42,21 +42,18 @@ export function ConversationSidebar({
     <div
       className={cn(
         'flex flex-col border-r border-border bg-background h-full relative transition-all duration-300 ease-in-out',
-        isCollapsed ? 'w-0 border-transparent' : 'w-56 md:w-60'
+        isCollapsed ? 'w-0 md:w-2 border-transparent' : 'w-56 md:w-60'
       )}
       style={{
-        position: 'sticky',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        zIndex: 10
+        position: 'relative',
+        zIndex: 30
       }}
     >
-      <div className="absolute right-0 top-4 transform translate-x-1/2 z-20">
+      <div className={`absolute right-0 ${isCollapsed ? 'top-2' : 'top-4'} transform translate-x-1/2 z-40`}>
         <Button
           variant="outline"
           size="icon"
-          className="h-6 w-6 rounded-full border border-border bg-background shadow-md"
+          className="h-6 w-6 rounded-full border border-border bg-background shadow-lg"
           onClick={onCollapseToggle}
         >
           {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}

@@ -484,22 +484,43 @@ export function UnifiedSearch({ initialQuery = '', embedded = false }: { initial
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 w-full">
+        {/* Always visible header with sidebar toggle for embedded mode */}
+        {embedded && (
+          <div className="flex items-center p-2 border-b border-border/50 bg-background/80">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${!isSidebarCollapsed && 'mr-2'}`}
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+            {currentConversation && !isSidebarCollapsed && (
+              <div className="text-sm font-medium truncate">
+                {currentConversation.title}
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Mobile-only header with sidebar toggle */}
-        <div className="md:hidden flex items-center p-2 border-b border-border">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          >
-            {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-          {currentConversation && (
-            <div className="ml-2 text-sm font-medium truncate">
-              {currentConversation.title}
-            </div>
-          )}
-        </div>
+        {!embedded && (
+          <div className="md:hidden flex items-center p-2 border-b border-border">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+            {currentConversation && (
+              <div className="ml-2 text-sm font-medium truncate">
+                {currentConversation.title}
+              </div>
+            )}
+          </div>
+        )}
         
         {/* Scrollable message area */}
         <div className="flex-1 overflow-auto px-3 sm:px-5 lg:px-8">
