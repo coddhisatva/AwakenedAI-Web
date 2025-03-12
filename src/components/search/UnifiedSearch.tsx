@@ -229,26 +229,6 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
   
   return (
     <div className="flex flex-col space-y-8">
-      {/* New Conversation Button - only shown when there are messages */}
-      {messages.length > 0 && (
-        <div className="flex justify-end">
-          <Button
-            onClick={startNewConversation}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            disabled={isLoading || isStreaming}
-          >
-            {isNewConversationStarting ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <PlusCircle className="h-4 w-4" />
-            )}
-            <span>New Conversation</span>
-          </Button>
-        </div>
-      )}
-      
       {/* Messages Display */}
       {messages.length > 0 && (
         <div className="space-y-4">
@@ -297,77 +277,99 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         </div>
       )}
       
-      {/* Search Form */}
-      <Card className="border-border shadow-sm overflow-hidden bg-card">
-        <CardContent className="p-4">
-          <form onSubmit={handleSubmit} className="flex flex-col space-y-4" role="form">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={messages.length > 0 ? "Ask a follow-up question..." : "What would you like to know?"}
-                  className="pl-9 pr-4 border-border focus-visible:ring-primary"
-                  disabled={isLoading || isStreaming}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" type="button" className="flex items-center gap-1.5 border-border">
-                      <SlidersHorizontal className="h-4 w-4" />
-                      <span className="hidden sm:inline">Filters</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="sm:max-w-md">
-                    <SheetHeader>
-                      <SheetTitle>Search Filters</SheetTitle>
-                      <SheetDescription>
-                        Refine your search with specific filters to find exactly what you&apos;re looking for.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="py-6 space-y-6">
-                      {/* Filters content - simplified for now */}
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium flex items-center gap-2">
-                          <BookOpen className="h-4 w-4 text-primary" />
-                          <span>Book Categories</span>
-                        </h3>
-                      </div>
-                    </div>
-                    <SheetFooter>
-                      <Button 
-                        type="button" 
-                        className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
-                      >
-                        Apply Filters
+      {/* Search Form and Action Buttons */}
+      <div className="space-y-4">
+        <Card className="border-border shadow-sm overflow-hidden bg-card">
+          <CardContent className="p-4">
+            <form onSubmit={handleSubmit} className="flex flex-col space-y-4" role="form">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={messages.length > 0 ? "Ask a follow-up question..." : "What would you like to know?"}
+                    className="pl-9 pr-4 border-border focus-visible:ring-primary"
+                    disabled={isLoading || isStreaming}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" type="button" className="flex items-center gap-1.5 border-border">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        <span className="hidden sm:inline">Filters</span>
                       </Button>
-                    </SheetFooter>
-                  </SheetContent>
-                </Sheet>
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || isStreaming || !query.trim()} 
-                  className="bg-primary hover:bg-primary/90 text-white"
-                >
-                  {isLoading ? (
-                    <>
-                      <span className="mr-2">Searching</span>
-                      <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      <span>{messages.length > 0 ? 'Send' : 'Search'}</span>
-                    </>
-                  )}
-                </Button>
+                    </SheetTrigger>
+                    <SheetContent className="sm:max-w-md">
+                      <SheetHeader>
+                        <SheetTitle>Search Filters</SheetTitle>
+                        <SheetDescription>
+                          Refine your search with specific filters to find exactly what you&apos;re looking for.
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="py-6 space-y-6">
+                        {/* Filters content - simplified for now */}
+                        <div className="space-y-4">
+                          <h3 className="text-sm font-medium flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-primary" />
+                            <span>Book Categories</span>
+                          </h3>
+                        </div>
+                      </div>
+                      <SheetFooter>
+                        <Button 
+                          type="button" 
+                          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
+                        >
+                          Apply Filters
+                        </Button>
+                      </SheetFooter>
+                    </SheetContent>
+                  </Sheet>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || isStreaming || !query.trim()} 
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="mr-2">Searching</span>
+                        <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        <span>{messages.length > 0 ? 'Send' : 'Search'}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+        
+        {/* New Conversation Button - shown when there are messages */}
+        {messages.length > 0 && (
+          <div className="flex justify-center">
+            <Button
+              onClick={startNewConversation}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              disabled={isLoading || isStreaming}
+            >
+              {isNewConversationStarting ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlusCircle className="h-4 w-4" />
+              )}
+              <span>New Conversation</span>
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 
