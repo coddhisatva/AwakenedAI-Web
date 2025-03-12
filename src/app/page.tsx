@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -9,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Search, Database, BookOpen, Brain } from 'lucide-react';
+import { UnifiedSearch } from '@/components/search/UnifiedSearch';
 
 export default function Home() {
   return (
@@ -31,26 +31,8 @@ export default function Home() {
               mysticism, spirituality, history, psychology, alternative health, philosophy, and more (Alpha).
             </p>
             
-            <div className="relative mx-auto max-w-xl">
-              <form 
-                className="flex relative items-center"
-                action="/search"
-              >
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input 
-                    name="q" 
-                    placeholder="Ask any question about life, consciousness, spirituality..." 
-                    className="pl-10 py-6 pr-24 rounded-full border-muted shadow-sm focus-visible:ring-primary focus-visible:ring-offset-0"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="absolute right-1 h-10 rounded-full px-5 bg-primary hover:bg-primary/90 text-white"
-                >
-                  Search
-                </Button>
-              </form>
+            <div className="max-w-4xl mx-auto">
+              <UnifiedSearch />
             </div>
           </div>
         </div>
@@ -112,17 +94,6 @@ export default function Home() {
               title="Receive Wisdom" 
               description="Get a comprehensive answer with direct references to the source materials." 
             />
-          </div>
-
-          <div className="mt-12 text-center">
-            <Button size="lg" asChild className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white">
-              <Link href="/search">
-                <span className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
-                  Try Advanced Search
-                </span>
-              </Link>
-            </Button>
           </div>
         </div>
       </section>
