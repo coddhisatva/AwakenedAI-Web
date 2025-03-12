@@ -37,8 +37,8 @@ export function UnifiedSearch({ initialQuery = '', embedded = false }: { initial
   const [query, setQuery] = useState(initialQuery);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Sidebar state
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Sidebar state - collapse by default when embedded
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(embedded);
   const [isNewConversationStarting, setIsNewConversationStarting] = useState(false);
   
   // Streaming state
@@ -123,6 +123,25 @@ export function UnifiedSearch({ initialQuery = '', embedded = false }: { initial
       debouncedUpdateStreamingMessage.cancel();
     };
   }, [debouncedUpdateStreamingMessage]);
+  
+  // Adjust sidebar collapse based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (embedded || window.innerWidth < 768) {
+        setIsSidebarCollapsed(true);
+      }
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    // Listen for window resize
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [embedded]);
   
   // Handle search form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -451,7 +470,7 @@ export function UnifiedSearch({ initialQuery = '', embedded = false }: { initial
   };
   
   return (
-    <div className={`flex ${embedded ? 'h-[60vh] md:h-[70vh]' : 'h-[calc(100vh-4rem)]'} w-full max-w-none overflow-hidden`}>
+    <div className={`flex ${embedded ? 'h-[500px] sm:h-[550px] md:h-[600px]' : 'h-[calc(100vh-4rem)]'} w-full max-w-none overflow-hidden rounded-lg ${embedded ? 'border border-border/40 shadow-sm' : ''}`}>
       {/* Conversation History Sidebar */}
       <ConversationSidebar 
         groupedConversations={groupedConversations}

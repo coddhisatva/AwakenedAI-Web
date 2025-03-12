@@ -12,9 +12,9 @@ import { UnifiedSearch } from '@/components/search/UnifiedSearch';
 
 export default function Home() {
   return (
-    <div className="flex flex-col space-y-24 pb-12">
+    <div className="flex flex-col pb-12">
       {/* Hero Section */}
-      <section className="relative pt-12 md:pt-24 pb-12 overflow-hidden">
+      <section className="relative pt-12 md:pt-24 pb-8 overflow-hidden">
         {/* Background Gradient Elements */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-1/4 right-1/4 -z-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
@@ -22,25 +22,25 @@ export default function Home() {
         </div>
 
         <div className="container px-4 mx-auto">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
+          <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
               Unlock the Wisdom of <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Thousands of Books</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mt-6">
               A comprehensive AI knowledge system built on thousands of curated books spanning 
               mysticism, spirituality, history, psychology, alternative health, philosophy, and more (Alpha).
             </p>
-            
-            {/* Search Component - added back here */}
-            <div className="w-full pt-4">
-              <UnifiedSearch embedded={true} />
-            </div>
           </div>
         </div>
       </section>
       
+      {/* Search Section - Full Width */}
+      <section className="w-full mx-0 -mt-4">
+        <UnifiedSearch embedded={true} />
+      </section>
+      
       {/* Features Section */}
-      <section className="py-12 bg-secondary/30">
+      <section className="py-12 mt-8 bg-secondary/30">
         <div className="container px-4 mx-auto">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Powered by Knowledge</h2>

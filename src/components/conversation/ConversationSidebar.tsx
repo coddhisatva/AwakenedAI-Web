@@ -45,7 +45,7 @@ export function ConversationSidebar({
         isCollapsed ? 'w-0 border-transparent' : 'w-56 md:w-60'
       )}
       style={{
-        position: isCollapsed ? 'relative' : 'sticky',
+        position: 'sticky',
         left: 0,
         top: 0,
         bottom: 0,
