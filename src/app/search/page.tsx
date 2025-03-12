@@ -11,21 +11,16 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   const query = searchParams?.q || '';
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
-      <div className="max-w-4xl mx-auto flex flex-col space-y-8">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Search className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold tracking-tight">Knowledge Search</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Search our database of thousands of books to find insights on any topic of interest.
-          </p>
+    <div className="flex flex-col h-full w-full">
+      <div className="p-4 border-b border-border bg-background/50 backdrop-blur-sm">
+        <div className="mx-auto flex items-center gap-2">
+          <Search className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-semibold tracking-tight">Knowledge Search</h1>
         </div>
-
-        {/* Use the UnifiedSearch component with initialQuery */}
-        <UnifiedSearch initialQuery={query} />
       </div>
+
+      {/* Use the UnifiedSearch component with initialQuery */}
+      <UnifiedSearch initialQuery={query} />
     </div>
   );
 } 

@@ -451,7 +451,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
   };
   
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] w-full max-w-none overflow-hidden">
       {/* Conversation History Sidebar */}
       <ConversationSidebar 
         groupedConversations={groupedConversations}
@@ -464,7 +464,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 w-full">
         {/* Mobile-only header with sidebar toggle */}
         <div className="md:hidden flex items-center p-2 border-b border-border">
           <Button
@@ -483,8 +483,8 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         </div>
         
         {/* Scrollable message area */}
-        <div className="flex-1 overflow-auto px-2 sm:px-3 md:px-4">
-          <div className="flex flex-col space-y-6 w-full">
+        <div className="flex-1 overflow-auto px-3 sm:px-5 lg:px-8">
+          <div className="flex flex-col space-y-6 w-full max-w-full">
             {/* Messages Display */}
             {currentConversation && currentConversation.messages.length > 0 ? (
               <div className="space-y-4 pt-4">
@@ -520,7 +520,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
               </div>
             ) : (
               <div className="text-center py-12 lg:py-16 my-4 bg-secondary/20 rounded-lg border border-border/40">
-                <div className="flex flex-col items-center space-y-4 max-w-lg mx-auto px-4">
+                <div className="flex flex-col items-center space-y-4 px-4">
                   <BookOpen className="h-10 w-10 md:h-12 md:w-12 text-primary/50" />
                   <h3 className="text-lg md:text-xl font-medium">Enter a query to begin</h3>
                   <p className="text-sm md:text-base text-muted-foreground">
@@ -533,7 +533,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         </div>
         
         {/* Search Form and Action Buttons - sticky at bottom */}
-        <div className="sticky bottom-0 pt-2 pb-3 px-2 sm:px-3 md:px-4 bg-background z-10 border-t border-border/30">
+        <div className="sticky bottom-0 pt-2 pb-3 px-2 sm:px-4 lg:px-6 bg-background z-10 border-t border-border/30">
           <Card className="border-border shadow-sm overflow-hidden bg-card">
             <CardContent className="p-2 sm:p-3">
               <form onSubmit={handleSubmit} className="flex flex-col space-y-3" role="form">
