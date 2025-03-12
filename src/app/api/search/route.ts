@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
   
+  // Add diagnostic logging
+  console.log('API_KEY_EXISTS:', !!process.env.OPENAI_API_KEY);
+  console.log('API_KEY_LENGTH:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
+  console.log('ENV:', process.env.NODE_ENV);
+  console.log('MEMORY_USAGE:', JSON.stringify(process.memoryUsage()));
+  
   if (!query) {
     return NextResponse.json(
       { error: 'Query parameter is required' },

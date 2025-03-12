@@ -39,12 +39,21 @@ interface DocumentResult {
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
+    console.log('START embedding generation with text length:', text.length);
+    const startTime = Date.now();
+    
+    // Use the existing openai client instance instead of creating a new one
+    console.time('openai-api-request');
     const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",
       input: text,
       encoding_format: "float",
     });
-
+    console.timeEnd('openai-api-request');
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`TOTAL embedding generation time: ${totalTime}ms`);
+    
     return response.data[0].embedding;
   } catch (error) {
     console.error('Error generating embedding:', error);

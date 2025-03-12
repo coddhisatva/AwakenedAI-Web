@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Use the same model as in the processing repo
     const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
+      model: "text-embedding-ada-002",
       input: text,
       encoding_format: "float",
     });
