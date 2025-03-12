@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
     // Validate required parameters
     const { query, context } = requestData;
     if (!query || !context) {
+      console.log(`[${new Date().toISOString()}] Missing required parameters`);
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 }
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     
     console.log(`[${new Date().toISOString()}] Processing query: "${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`);
     console.log(`[${new Date().toISOString()}] Context items: ${context.length}`);
+    console.log(`[${new Date().toISOString()}] First context item: ${JSON.stringify(context[0]?.text?.substring(0, 100) || 'N/A')}...`);
     
     // Format context for the model
     console.log(`[${new Date().toISOString()}] Formatting context for model...`);
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
     });
     
     console.log(`[${new Date().toISOString()}] Context formatting completed in ${Date.now() - contextFormatStart}ms`);
+    console.log(`[${new Date().toISOString()}] Formatted context length: ${formattedContext.length} characters`);
     
     // Create prompt
     const messages: ChatCompletionMessageParam[] = [
@@ -86,8 +89,11 @@ export async function POST(request: NextRequest) {
     // Log before OpenAI API call
     const apiCallStartTime = Date.now();
     console.log(`[${new Date().toISOString()}] Starting OpenAI API call with gpt-4o model`);
+    console.log(`[${new Date().toISOString()}] OpenAI API key exists: ${!!process.env.OPENAI_API_KEY}`);
+    console.log(`[${new Date().toISOString()}] OpenAI API key length: ${process.env.OPENAI_API_KEY?.length || 0}`);
     
     // Make the OpenAI API call with streaming
+    console.log(`[${new Date().toISOString()}] Creating chat completion with streaming...`);
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: messages,
@@ -95,19 +101,25 @@ export async function POST(request: NextRequest) {
       max_tokens: max_tokens,
       stream: true,
     });
+    console.log(`[${new Date().toISOString()}] OpenAI streaming connection established`);
     
     // Process the streaming response
     (async () => {
       try {
         let fullResponse = '';
+        let chunkCount = 0;
         
         // Handle each chunk as it arrives
+        console.log(`[${new Date().toISOString()}] Beginning to process streaming chunks`);
         for await (const chunk of completion) {
+          chunkCount++;
           const content = chunk.choices[0]?.delta?.content || '';
+          
           if (content) {
             fullResponse += content;
             
             // Send the chunk to the client
+            console.log(`[${new Date().toISOString()}] Sending chunk #${chunkCount}: ${content.length} chars`);
             await writer.write(
               encoder({
                 type: 'chunk',
@@ -118,17 +130,22 @@ export async function POST(request: NextRequest) {
                 fullContent: fullResponse,
               })
             );
+          } else {
+            console.log(`[${new Date().toISOString()}] Received empty content chunk #${chunkCount}`);
           }
         }
         
         // Log completion of OpenAI API call
         const apiCallDuration = Date.now() - apiCallStartTime;
         console.log(`[${new Date().toISOString()}] OpenAI API call completed in ${apiCallDuration}ms`);
+        console.log(`[${new Date().toISOString()}] Received ${chunkCount} chunks in total`);
+        console.log(`[${new Date().toISOString()}] Final response length: ${fullResponse.length} characters`);
         
         // Format and clean up the full response
         const formattedResponse = fullResponse.trim();
         
         // Send the completion message
+        console.log(`[${new Date().toISOString()}] Sending completion done message`);
         await writer.write(
           encoder({
             type: 'done',
@@ -143,6 +160,7 @@ export async function POST(request: NextRequest) {
         console.error(`[${new Date().toISOString()}] Error during streaming:`, error);
         
         // Send error message to client
+        console.log(`[${new Date().toISOString()}] Sending error message to client`);
         await writer.write(
           encoder({
             type: 'error',
@@ -151,10 +169,12 @@ export async function POST(request: NextRequest) {
         );
       } finally {
         await writer.close();
+        console.log(`[${new Date().toISOString()}] Stream writer closed`);
       }
     })();
     
     // Return the stream response
+    console.log(`[${new Date().toISOString()}] Returning stream response`);
     return new NextResponse(stream.readable, {
       headers: {
         'Content-Type': 'text/event-stream',

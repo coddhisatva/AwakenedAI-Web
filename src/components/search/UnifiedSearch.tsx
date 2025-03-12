@@ -158,12 +158,15 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
   const startCompletionStream = async (chunks: RawChunk[], searchQuery: string) => {
     try {
       setIsCompletionLoading(true);
+      console.log('Starting completion stream for query:', searchQuery);
+      console.log('Number of chunks to process:', chunks.length);
       
       // Create a new AbortController for this stream
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
       
       // Start the streaming request
+      console.log('Making request to /api/completion-stream');
       const streamResponse = await fetch('/api/completion-stream', {
         method: 'POST',
         headers: {
@@ -177,6 +180,8 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
         signal
       });
       
+      console.log('Stream response status:', streamResponse.status);
+      
       if (!streamResponse.ok) {
         throw new Error(`Stream error: ${streamResponse.status}`);
       }
@@ -187,51 +192,68 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       
       const decoder = new TextDecoder();
       let accumulatedContent = '';
+      console.log('Beginning to read stream');
       
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
-          console.log('Stream complete');
+          console.log('Stream complete, done signal received');
           break;
         }
         
         // Process the chunk
         const chunk = decoder.decode(value);
+        console.log('Received chunk data:', chunk.length, 'bytes');
+        
         const lines = chunk.split('\n').filter(line => line.trim());
+        console.log('Split into', lines.length, 'lines');
         
         for (const line of lines) {
           try {
+            console.log('Processing line:', line.substring(0, 50) + (line.length > 50 ? '...' : ''));
             const parsedChunk = JSON.parse(line);
+            console.log('Parsed chunk type:', parsedChunk.type);
             
             if (parsedChunk.type === 'chunk') {
               // Use the fullContent if available for more accurate rendering
               if (parsedChunk.fullContent) {
+                console.log('Using fullContent with length:', parsedChunk.fullContent.length);
                 accumulatedContent = parsedChunk.fullContent;
               } else {
+                console.log('Appending content with length:', parsedChunk.content?.length);
                 accumulatedContent += parsedChunk.content;
               }
               
               setStreamedContent(accumulatedContent);
+              console.log('Updated streamedContent, current length:', accumulatedContent.length);
               
               // Update the result with streamed content
-              setResult(prev => prev ? {
-                ...prev,
-                content: accumulatedContent,
-                isStreaming: true
-              } : null);
+              setResult(prev => {
+                console.log('Updating result with new content');
+                return prev ? {
+                  ...prev,
+                  content: accumulatedContent,
+                  isStreaming: true
+                } : null;
+              });
             } else if (parsedChunk.type === 'done') {
               // Final content - use the complete content from the server
               const finalContent = parsedChunk.content || accumulatedContent;
+              console.log('Received done signal with final content length:', finalContent.length);
               
-              setResult(prev => prev ? {
-                ...prev,
-                content: finalContent,
-                isStreaming: false
-              } : null);
+              setResult(prev => {
+                console.log('Setting final result content');
+                return prev ? {
+                  ...prev,
+                  content: finalContent,
+                  isStreaming: false
+                } : null;
+              });
               
               console.log('Streaming completed successfully');
             } else if (parsedChunk.type === 'error') {
+              console.error('Stream error message received:', parsedChunk.error);
               throw new Error(parsedChunk.error || 'Stream processing error');
             }
           } catch (parseError) {
@@ -248,6 +270,7 @@ export function UnifiedSearch({ initialQuery = '' }: { initialQuery?: string }) 
       }
     } finally {
       setIsCompletionLoading(false);
+      console.log('Completion streaming process finished');
     }
   };
   
