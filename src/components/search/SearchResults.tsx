@@ -13,8 +13,8 @@ interface ResultSource {
   id: string;
   title: string;
   author?: string;
-  subject?: string;
-  filename?: string;
+  filepath?: string;
+  created_at?: string;
 }
 
 interface SearchResult {
@@ -157,12 +157,6 @@ export function SearchResults({ query }: SearchResultsProps) {
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
                             <User className="h-3.5 w-3.5" />
                             <span>{source.author}</span>
-                          </div>
-                        )}
-                        {source.subject && (
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                            <Tag className="h-3.5 w-3.5" />
-                            <span>{source.subject}</span>
                           </div>
                         )}
                       </div>

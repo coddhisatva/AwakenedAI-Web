@@ -37,10 +37,8 @@ export async function searchVectors(
           id,
           title,
           author,
-          creator,
-          subject,
-          filename,
-          path
+          filepath,
+          created_at
         )
       `)
       .order('embedding <-> $1', { ascending: true })

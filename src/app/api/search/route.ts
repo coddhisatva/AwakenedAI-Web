@@ -5,11 +5,8 @@ import { searchVectors } from '@/lib/server/supabase';
 interface DocumentMetadata {
   title?: string;
   author?: string;
-  creator?: string;
-  subject?: string;
-  filename?: string;
-  path?: string;
   source?: string;
+  created_at?: string;
   [key: string]: unknown;
 }
 
@@ -22,10 +19,8 @@ interface SearchChunk {
   documents?: {
     title?: string;
     author?: string;
-    creator?: string;
-    subject?: string;
-    filename?: string;
-    path?: string;
+    filepath?: string;
+    created_at?: string;
     [key: string]: unknown;
   };
 }
@@ -59,7 +54,7 @@ export async function GET(request: NextRequest) {
     
     // Add metadata filters if provided
     for (const [key, value] of searchParams.entries()) {
-      if (key !== 'q' && ['author', 'title', 'subject', 'creator'].includes(key)) {
+      if (key !== 'q' && ['author', 'title'].includes(key)) {
         filters[key] = value;
       }
     }
@@ -91,10 +86,10 @@ export async function GET(request: NextRequest) {
       // Preserve all metadata
       metadata: chunk.metadata || {
         title: chunk.documents?.title || 'Unknown Document',
-        author: chunk.documents?.author || chunk.documents?.creator,
-        subject: chunk.documents?.subject,
-        source: chunk.documents?.filename || chunk.documents?.path,
-        document_id: chunk.document_id
+        author: chunk.documents?.author || '',
+        source: chunk.documents?.filepath || '',
+        document_id: chunk.document_id,
+        created_at: chunk.documents?.created_at
       }
     }));
     console.timeEnd('formatting-chunks-time');
@@ -145,12 +140,11 @@ function extractSourcesFromChunks(chunks: SearchChunk[]): Source[] {
     // Generate source information more directly, matching CLI pattern
     const source: Source = {
       id: docId,
-      // Look for document filename in multiple possible locations
-      title: chunk.documents?.filename || 
-             chunk.documents?.title || 
+      // Look for document title or filepath
+      title: chunk.documents?.title || 
              chunk.metadata?.source || 
-             chunk.documents?.path ||
-             "Niacin_The_Real_Story_Learn_about_the_Wonderful_Healing_Properties.pdf" // Fallback to match CLI
+             chunk.documents?.filepath ||
+             "Unknown Document"
     };
     
     // Store in map by document ID to deduplicate
