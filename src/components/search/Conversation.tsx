@@ -216,7 +216,7 @@ export function Conversation({ initialQuery, initialResponse, sources = [] }: Co
             if (msg.id === messageId) {
               return {
                 ...msg,
-                content: 'Sorry, there was an error generating a response. Please try again.'
+                content: 'Sorry (Conversation), there was an error generating a response. Please try again.'
               };
             }
             return msg;

@@ -400,7 +400,7 @@ export function UnifiedSearch({ initialQuery = '', embedded = false }: { initial
             if (msg.id === assistantMessageIdRef.current) {
               return {
                 ...msg,
-                content: `Sorry, there was an error processing your query. ${errorMessage.includes('search') ? 'The search service might be experiencing issues.' : 'Please try again later or rephrase your question.'}`
+                content: `Sorry (Unified), there was an error processing your query. ${errorMessage.includes('search') ? 'The search service might be experiencing issues.' : 'Please try again later or rephrase your question.'}`
               };
             }
             return msg;
