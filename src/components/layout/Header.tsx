@@ -26,10 +26,7 @@ export function Header() {
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Awakened AI</span>
           </Link>
           <nav className="hidden md:flex gap-6">
-            <Link href="/about" className="text-sm font-medium hover:text-primary flex items-center gap-1.5 transition-colors">
-              <Info size={16} />
-              <span>About</span>
-            </Link>
+            {/* About link removed */}
           </nav>
         </div>
         
@@ -68,12 +65,7 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" asChild size="sm" className="hidden sm:flex">
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-              <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
-                <Link href="/sign-up">Sign Up</Link>
-              </Button>
+              {/* Sign In and Sign Up buttons removed */}
             </div>
           )}
           
@@ -86,27 +78,10 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[250px] sm:w-[300px]">
               <nav className="flex flex-col gap-4 mt-8">
-                <Link 
-                  href="/about" 
-                  className="flex items-center gap-2 text-sm font-medium px-2 py-1.5 hover:bg-accent rounded-md"
-                >
-                  <Info size={18} />
-                  About
-                </Link>
+                {/* About link and sign in/up links removed from mobile menu */}
                 {!user && (
                   <>
-                    <Link 
-                      href="/sign-in" 
-                      className="flex items-center gap-2 text-sm font-medium px-2 py-1.5 hover:bg-accent rounded-md"
-                    >
-                      Sign In
-                    </Link>
-                    <Link 
-                      href="/sign-up" 
-                      className="flex items-center gap-2 text-sm font-medium bg-primary text-white px-2 py-1.5 rounded-md"
-                    >
-                      Sign Up
-                    </Link>
+                    {/* Sign In and Sign Up links removed */}
                   </>
                 )}
               </nav>
