@@ -1,6 +1,8 @@
 # AwakenedAI-Web
 Web repo, one of 2 repos for Awakened AI: A RAG-based knowledge system transforming a curated library of ebooks spanning mysticism, spirituality, history, psychology, alternative health, philosophy, and more, into a comprehensive AI knowledge base using vector embeddings and retrieval-augmented generation.
 
+> **Project Status**: Currently under active development.
+
 Site: https://awakened-ai-web.vercel.app/
 
 # AwakenedAI-Web Technical Documentation
@@ -44,18 +46,23 @@ AwakenedAI-Web is a Next.js web application that provides a user interface for q
   - Structured prompting for knowledge synthesis
 
 ### UI Components
-- **SearchForm**: Input interface for user queries
-- **SearchResults**: Display of generated responses
-- **SourceCitation**: Attribution of information sources
+- **UnifiedSearch**: Main search interface that provides embedded search functionality and handles query input
+- **Conversation Interface**: Interactive chat-like interface that maintains context between queries and responses
+- **Chat Sidebar**: Persistent sidebar that shows conversation history and allows users to navigate between different conversations
+- **SearchResults**: Display of generated responses with expandable sections
+- **SourceCitation**: Attribution of information sources with book metadata
+- **Header**: Simplified navigation with branding element
+- **Footer**: Minimal footer with brand information and copyright
 
 ## Data Flow
-1. User submits search query through the SearchForm
+1. User submits search query through the UnifiedSearch component
 2. Query is sent to `/api/search` endpoint
 3. Search endpoint generates embedding and queries Supabase
 4. Retrieved chunks are formatted into context
 5. Context and query are sent to `/api/completion`
 6. Completion endpoint generates a response using OpenAI
-7. Response with source citations is displayed to the user
+7. Response with source citations is displayed to the user in the conversation interface
+8. The conversation history is updated in the chat sidebar
 
 ## Configuration
 - **Environment Variables**:
@@ -67,6 +74,9 @@ AwakenedAI-Web is a Next.js web application that provides a user interface for q
 1. Run development server: `npm run dev`
 2. Build for production: `npm run build`
 3. Start production server: `npm start`
+
+## Deployment
+The application is deployed on Vercel, which provides continuous deployment from the GitHub repository. The Vercel deployment automatically handles environment variables and builds.
 
 ## Optimization Considerations
 - **Response Caching**: Frequent queries could be cached
