@@ -28,7 +28,7 @@ export default function Home() {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mt-6">
               A comprehensive AI knowledge system built on thousands of curated books spanning 
-              mysticism, spirituality, history, psychology, alternative health, philosophy, and more (Alpha).
+              mysticism, spirituality, history, psychology, alternative health, philosophy, and more (This site is currently under construction).
             </p>
           </div>
         </div>
