@@ -32,3 +32,13 @@ The bot was not able to find any context, and we spent a lot of time trying to r
 	- Conversation sidebar
 	- Chat takes up most of width of screen
 	- Implements streaming for gradual chat response, and faster rather than instantaneous at the end
+
+## Day 17
+- Updating Readme
+- Removing extraneous UI
+
+## Day 18
+- Ading HNSW indexing to increase speed and prevent timeouts
+	- Couldn't via web sql dashboard bc timeouts, so:
+	- Installed supabase cli
+	- Running migration via cli
