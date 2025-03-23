@@ -42,3 +42,4 @@ The bot was not able to find any context, and we spent a lot of time trying to r
 	- Couldn't via web sql dashboard bc timeouts, so:
 	- Installed supabase cli
 	- Running migration via cli
+	- Too intensive, had to clear db and add HSNW in processing repo, need to reprocess

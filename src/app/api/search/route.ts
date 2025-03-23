@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchVectors } from '@/lib/server/supabase';
+import { ragConfig } from '@/lib/config';
 
 // Define proper interfaces for better type safety
 interface DocumentMetadata {
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     console.log('Searching for:', query);
     console.time('vector-search-time');
     // Retrieve relevant chunks from vector database with proper error handling
-    const chunks = await searchVectors(query, 5, filters);
+    const chunks = await searchVectors(query, ragConfig.maxChunks, filters);
     console.timeEnd('vector-search-time');
     
     if (!chunks || chunks.length === 0) {
@@ -192,7 +193,7 @@ async function generateCompletionResponse(
         query,
         context,
         model: 'gpt-4o',
-        temperature: 0.1,  // Lower temperature to match CLI version
+        temperature: ragConfig.temperature,  // Using centralized config value
       }),
     });
     
