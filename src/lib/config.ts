@@ -23,4 +23,10 @@ export const ragConfig = {
    * Whether to include document metadata in the context
    */
   includeMetadata: true,
+  
+  // Hybrid search configuration
+  hybridSearch: {
+    // Number of candidates to retrieve in text search phase
+    candidatePoolSize: 200
+  }
 }; 

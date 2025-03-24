@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { ragConfig } from '@/lib/config';
 
 // Initialize the OpenAI client for embeddings
 const openai = new OpenAI({
@@ -63,7 +64,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
 /**
  * Search for vectors in the database based on similarity to the query
- * Matches CLI implementation closely
+ * Using hybrid search: text search first, then vector search on candidates
  */
 export async function searchVectors(
   query: string,
@@ -72,10 +73,149 @@ export async function searchVectors(
 ) {
   console.time('supabase-search-total');
   try {
-    console.log(`Generating embedding for query: "${query}"`);
-    console.time('embedding-generation');
+    // Step 1: Perform text search to get initial candidates
+    console.log(`Performing text search for query: "${query}"`);
+    const { data: textResults, error: textError } = await supabase
+      .from('chunks')
+      .select('id')
+      .textSearch('content', query, {
+        config: 'english',
+        type: 'websearch'
+      })
+      .limit(ragConfig.hybridSearch.candidatePoolSize);
+    
+    if (textError) {
+      console.error('Error performing text search:', textError);
+      // Fall back to regular vector search if text search fails
+      console.log('Falling back to vector-only search');
+      return vectorOnlySearch(query, limit, filters);
+    }
+    
+    const candidateIds = textResults?.map(r => r.id) || [];
+    
+    if (candidateIds.length === 0) {
+      console.log('No text search results found, falling back to vector-only search');
+      return vectorOnlySearch(query, limit, filters);
+    }
+    
+    console.log(`Text search found ${candidateIds.length} candidates`);
+    
+    // Step 2: Generate embedding for the query
     const embedding = await generateEmbedding(query);
-    console.timeEnd('embedding-generation');
+    
+    // Step 3: Get all results from vector search (we'll filter them later)
+    const { data, error } = await supabase.rpc('match_chunks', {
+      query_embedding: embedding,
+      match_count: 50 // Get more than we need to ensure we have enough after filtering
+    });
+    
+    if (error) {
+      console.error('Error performing vector search:', error);
+      throw new Error(`Failed to perform search: ${error.message}`);
+    }
+    
+    // Step 4: Filter to only include candidates from text search and take top 'limit' results
+    const candidateSet = new Set(candidateIds);
+    const filteredResults = data
+      .filter((chunk: ChunkResult) => candidateSet.has(chunk.id))
+      .slice(0, limit);
+    
+    console.log(`Hybrid search returning ${filteredResults.length} results`);
+    
+    if (filteredResults.length === 0) {
+      console.log('No overlapping results between text and vector search, falling back to vector-only');
+      return vectorOnlySearch(query, limit, filters);
+    }
+    
+    // Fetch document metadata for results, just like in vector-only search
+    if (filteredResults.length > 0) {
+      // Extract unique document IDs from the results
+      const documentIds = [...new Set(filteredResults.map((chunk: ChunkResult) => chunk.document_id))];
+      
+      console.log(`Fetching metadata for ${documentIds.length} documents`);
+      
+      // Fetch the related documents with all relevant fields
+      const { data: documents, error: docError } = await supabase
+        .from('documents')
+        .select('id, title, author, filepath, created_at')
+        .in('id', documentIds);
+      
+      if (docError) {
+        console.error('Error fetching documents:', docError);
+      } else if (documents) {
+        console.log(`Retrieved ${documents.length} document records`);
+        
+        // Create a map for faster document lookups
+        const documentMap = documents.reduce((map: Record<string, DocumentResult>, doc: DocumentResult) => {
+          map[doc.id] = doc;
+          return map;
+        }, {});
+        
+        // Process chunks with document metadata
+        const result = filteredResults.map((chunk: ChunkResult) => {
+          const document = documentMap[chunk.document_id] || null;
+          
+          return {
+            // Basic chunk data
+            id: chunk.id,
+            document_id: chunk.document_id,
+            text: chunk.content || '',
+            content: chunk.content || '',
+            similarity: chunk.similarity,
+            
+            // Include full document record
+            documents: document,
+            
+            // Extract key metadata fields for easier access
+            metadata: {
+              title: document?.title || 'Unknown Document',
+              author: document?.author || '',
+              source: document?.filepath || '',
+              document_id: chunk.document_id,
+              created_at: document?.created_at || ''
+            }
+          };
+        });
+        
+        console.timeEnd('supabase-search-total');
+        return result;
+      }
+    }
+    
+    // If no document join was performed, still format the base results
+    console.timeEnd('supabase-search-total');
+    return filteredResults.map((chunk: any) => ({
+      id: chunk.id,
+      document_id: chunk.document_id,
+      text: chunk.content || '',
+      content: chunk.content || '',
+      similarity: chunk.similarity,
+      metadata: {
+        title: 'Unknown Document',
+        document_id: chunk.document_id
+      }
+    }));
+  } catch (error) {
+    console.timeEnd('supabase-search-total');
+    console.error('Error in searchVectors:', error);
+    throw error;
+  }
+}
+
+/**
+ * Original vector-only search as fallback
+ */
+async function vectorOnlySearch(
+  query: string,
+  limit: number = 5,
+  filters: Record<string, string> = {}
+) {
+  try {
+    console.log('Performing vector-only search');
+    console.time('vector-only-search');
+    
+    // Generate embedding
+    const embedding = await generateEmbedding(query);
     
     // Log filters for debugging even if not used yet
     if (Object.keys(filters).length > 0) {
@@ -84,20 +224,18 @@ export async function searchVectors(
     
     console.log('Embedding generated, searching database...');
     
-    // Use the match_chunks RPC function with specific parameters to match CLI
-    console.time('rpc-vector-search');
+    // Use the match_chunks RPC function with specific parameters
     const { data, error } = await supabase.rpc('match_chunks', {
       query_embedding: embedding,
       match_count: limit
     });
-    console.timeEnd('rpc-vector-search');
     
     if (error) {
       console.error('Error performing vector search:', error);
       throw new Error(`Failed to perform search: ${error.message}`);
     }
     
-    console.log(`Search returned ${data?.length || 0} results`);
+    console.log(`Vector-only search returned ${data?.length || 0} results`);
     
     // If we have results but need document info, fetch the related documents
     if (data && data.length > 0) {
@@ -107,19 +245,16 @@ export async function searchVectors(
       console.log(`Fetching metadata for ${documentIds.length} documents`);
       
       // Fetch the related documents with all relevant fields
-      console.time('document-metadata-fetch');
       const { data: documents, error: docError } = await supabase
         .from('documents')
         .select('id, title, author, filepath, created_at')
         .in('id', documentIds);
-      console.timeEnd('document-metadata-fetch');
       
       if (docError) {
         console.error('Error fetching documents:', docError);
       } else if (documents) {
         console.log(`Retrieved ${documents.length} document records`);
         
-        console.time('process-chunks-with-metadata');
         // Create a map for faster document lookups
         const documentMap = documents.reduce((map: Record<string, DocumentResult>, doc: DocumentResult) => {
           map[doc.id] = doc;
@@ -151,14 +286,13 @@ export async function searchVectors(
             }
           };
         });
-        console.timeEnd('process-chunks-with-metadata');
-        console.timeEnd('supabase-search-total');
+        console.timeEnd('vector-only-search');
         return result;
       }
     }
     
     // If no document join was performed, still format the base results
-    console.timeEnd('supabase-search-total');
+    console.timeEnd('vector-only-search');
     return data.map((chunk: any) => ({
       id: chunk.id,
       document_id: chunk.document_id,
@@ -171,8 +305,7 @@ export async function searchVectors(
       }
     })) || [];
   } catch (error) {
-    console.timeEnd('supabase-search-total');
-    console.error('Error in searchVectors:', error);
+    console.error('Error in vectorOnlySearch:', error);
     throw error;
   }
 } 
