@@ -43,3 +43,5 @@ The bot was not able to find any context, and we spent a lot of time trying to r
 	- Installed supabase cli
 	- Running migration via cli
 	- Too intensive, had to clear db and add HSNW in processing repo, need to reprocess
+- lowered k value 5 to 3
+- hybrid full text search, then vector search
