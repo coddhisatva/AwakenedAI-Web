@@ -27,6 +27,6 @@ export const ragConfig = {
   // Hybrid search configuration
   hybridSearch: {
     // Number of candidates to retrieve in text search phase
-    candidatePoolSize: 200
+    candidatePoolSize: 50
   }
 }; 
