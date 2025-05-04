@@ -45,3 +45,11 @@ The bot was not able to find any context, and we spent a lot of time trying to r
 	- Too intensive, had to clear db and add HSNW in processing repo, need to reprocess
 - lowered k value 5 to 3
 - hybrid full text search, then vector search
+
+## New Day 1
+- Reduce candidate pool size from 200 to 50 to try and fix text search falling back to vector, even in niacin
+- No avail
+- Add GIN index to content table
+- Success
+- Hypothesized that multi search is having trouble "Linus Pauling Institute"
+- Determined that when searching 'institute' and text search fills up, vector search is timing out for some reason
